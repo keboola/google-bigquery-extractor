@@ -1,0 +1,17 @@
+sudo: false
+
+language: php
+php:
+  - '7.0'
+  - nightly
+
+matrix:
+  allow_failures:
+    - php: nightly
+
+before_install:
+  - composer self-update
+
+install: composer install -n
+
+script: php vendor/bin/phpunit
