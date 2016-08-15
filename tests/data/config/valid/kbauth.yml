@@ -1,0 +1,21 @@
+parameters:
+  queries:
+    - name: "US Natality statistics"
+      query: "SELECT * FROM [dataSet.someTable] LIMIT 10"
+      storage: "gs://some-bucket"
+      primaryKey: null
+      incremental: false
+      projectId: some-project-123
+      flattenResults: true
+authorization:
+  oauth_api:
+    credentials:
+      '#data': '{"access_token":"1234567890","token_type":"Bearer","expires_in":3600,"refresh_token":"12345","created":1471202236}'
+      'appKey': 'someApplicationKey'
+      'id': 'id'
+      'authorizedFor': 'authorizedFor'
+      'creator': 'creator'
+      'created': 'created'
+      'oauthVersion': 'oauthVersion'
+      'appKey': 'someApplicationKey'
+      '#appSecret': 'someApplicationSecretKey'
