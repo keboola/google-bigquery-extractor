@@ -1,0 +1,6 @@
+authorization:
+  oauth_api:
+    credentials:
+      '#data': null
+      'appKey': 'someApplicationKey'
+      '#appSecret': 'someApplicationSecretKey'
