@@ -23,6 +23,7 @@ class AuthorizationDefinition implements ConfigurationInterface
 				->arrayNode('oauth_api')
 					->isRequired()
 					->children()
+						->variableNode('id')->end()
 						->arrayNode('credentials')
 							->isRequired()
 							->children()

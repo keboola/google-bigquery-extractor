@@ -14,6 +14,7 @@
   },
   "authorization": {
     "oauth_api": {
+      "id": "id",
       "credentials": {
         "#data": "{\"access_token\":\"1234567890\",\"token_type\":\"Bearer\",\"expires_in\":3600,\"refresh_token\":\"12345\",\"created\":1471202236}",
         "id": "id",
