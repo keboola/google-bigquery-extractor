@@ -69,6 +69,10 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 	{
 		$dirPath = getenv('KBC_DATADIR') . '/out/tables';
 
+		if (!is_dir($dirPath)) {
+			return;
+		}
+
 		$files = array_map(
 			function ($fileName) use ($dirPath) {
 				return $dirPath . '/' . $fileName;
