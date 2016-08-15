@@ -6,3 +6,7 @@ tests:
   entrypoint: "./phpunit.sh"
   tty: true
   stdin_open: true
+  environment:
+    KBC_CONFIGID: "extractor-test"
+    KBC_DATADIR: /tmp/extractor
+    KBC_RUNID: 987.654.321

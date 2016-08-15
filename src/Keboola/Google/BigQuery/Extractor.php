@@ -12,7 +12,6 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\Definition\Exception\Exception as ConfigException;
 use Symfony\Component\Yaml\Yaml;
-use Tracy\Debugger;
 
 class Extractor
 {
@@ -106,6 +105,11 @@ class Extractor
 	{
 		$google = $this->initGoogle();
 
+		$dirPath = getenv('KBC_DATADIR') . '/out/tables';
+		if (!file_exists($dirPath) || !is_dir($dirPath)) {
+			mkdir($dirPath, 0755, true);
+		}
+
 		foreach ($this->params['parameters']['queries'] AS $query) {
 			$query["format"] = "csv";
 			// execute query
@@ -141,7 +145,7 @@ class Extractor
 
 				$response = $google->request($cloudFileInfo['mediaLink']);
 
-				$filePath = getenv('KBC_DATADIR') . '/out/tables/' . $fileName;
+				$filePath = $dirPath . '/' . $fileName;
 
 				file_put_contents($filePath, $response->getBody());
 
