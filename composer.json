@@ -1,5 +1,9 @@
 {
     "name": "keboola/google-bigquery-extractor",
+    "license": "MIT",
+    "type": "project",
+    "description": "Keboola Google BigQuery Extractor",
+    "keywords": ["keboola", "bigquery", "extractor"],
     "authors": [
         {
             "name": "Erik Zigo",
