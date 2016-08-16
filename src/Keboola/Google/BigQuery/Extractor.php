@@ -22,7 +22,9 @@ class Extractor
 
 	private $params = [];
 
-	private $action = 'run';
+	private $action;
+
+	const DEFAULT_ACTION = 'run';
 
 	public function __construct(array $options = [])
 	{
@@ -46,6 +48,8 @@ class Extractor
 
 		if (isset($params['action'])) {
 			$this->action = $params['action'];
+		} else {
+			$this->action = self::DEFAULT_ACTION;
 		}
 
 		if (!isset($params['authorization'])) {
@@ -116,7 +120,10 @@ class Extractor
 	{
 		$google = $this->initGoogle();
 
-		return $google->listProjects();
+		return [
+			'status' => 'success',
+			'projects' => $google->listProjects(),
+		];
 	}
 
 	private function processRunAction()
@@ -197,7 +204,7 @@ class Extractor
 				} else {
 					$this->logger->error(sprintf('%s: File %s was not removed', $query["name"], $fileName));
 					//@FIXME log error response
-					throw new UserException("Cloud Storage file was not removed"/*, $googleApi->getLastRequest(), $googleApi->getLastResponse()*/);
+					throw new UserException("Cloud Storage file was not removed");
 				}
 			}
 

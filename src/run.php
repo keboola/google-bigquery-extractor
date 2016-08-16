@@ -1,8 +1,10 @@
 <?php
 use Monolog\Logger,
 	Monolog\Handler\StreamHandler,
+	Monolog\Handler\NullHandler,
 	Monolog\Formatter\LineFormatter;
 use Keboola\Google\BigQuery\Exception;
+use Keboola\Google\BigQuery\Extractor;
 use Keboola\Google\BigQuery\RestApi;
 use Symfony\Component\Yaml\Yaml,
 	Symfony\Component\Yaml\Exception\ParseException;
@@ -25,6 +27,8 @@ set_error_handler(
 	}
 );
 
+$action = Extractor::DEFAULT_ACTION;
+
 try {
 	// load config
 	$arguments = getopt("d::", ["data::"]);
@@ -41,14 +45,17 @@ try {
 		throw new ParseException("Could not parse config file");
 	}
 
+	if (isset($config["action"])) {
+		$action = $config["action"];
+	}
 
-	$extractor = new \Keboola\Google\BigQuery\Extractor([
+	$extractor = new Extractor([
 		'logger' => $logger,
 	]);
 
-//	if ($action !== 'run') {
-//		$logger->setHandlers(array(new NullHandler(Logger::INFO)));
-//	}
+	if ($action !== Extractor::DEFAULT_ACTION) {
+		$logger->setHandlers(array(new NullHandler(Logger::INFO)));
+	}
 
 
 	$result = $extractor->setConfig($config)->run();
@@ -61,9 +68,9 @@ try {
 } catch(Exception\UserException $e) {
 	$logger->log('error', $e->getMessage(), []);
 
-//	if ($action !== 'run') {
-//		echo $e->getMessage();
-//	}
+	if ($action !== Extractor::DEFAULT_ACTION) {
+		echo $e->getMessage();
+	}
 
 	exit(1);
 } catch(Exception\ExtractorException $e) {

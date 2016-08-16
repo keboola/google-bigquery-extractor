@@ -1,5 +1,5 @@
 <?php
-namespace Keboola\Google\BigQuery\Configuration;
+
 
 use Keboola\Google\BigQuery\Exception\UserException;
 use Keboola\Google\BigQuery\Extractor;
@@ -91,12 +91,17 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$extractor = new Extractor(["logger" => $logger]);
 		$result = $extractor->setConfig($config)->run();
 
-		$this->assertTrue(count($result) > 0);
+		$this->assertArrayHasKey('status', $result);
+		$this->assertArrayHasKey('projects', $result);
 
-		foreach ($result AS $metaData) {
+		$this->assertTrue(count($result['projects']) > 0);
+
+		foreach ($result['projects'] AS $metaData) {
 			$this->assertArrayHasKey('id', $metaData);
 			$this->assertArrayHasKey('name', $metaData);
 		}
+
+		$this->assertEquals('success', $result['status']);
 	}
 
 	public function testInvalidAction()
