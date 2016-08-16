@@ -128,10 +128,10 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
 				$this->assertArrayHasKey('destination', $params);
 				$this->assertArrayHasKey('incremental', $params);
-				$this->assertArrayHasKey('primaryKey', $params);
+				$this->assertArrayHasKey('primary_key', $params);
 
 				$this->assertTrue($params['incremental']);
-				$this->assertEquals($query['primaryKey'], $params['primaryKey']);
+				$this->assertEquals($query['primaryKey'], $params['primary_key']);
 				$this->assertTrue($params['incremental']);
 
 				$manifestValidated = true;

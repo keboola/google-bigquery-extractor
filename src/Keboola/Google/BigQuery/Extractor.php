@@ -153,7 +153,7 @@ class Extractor
 					'destination' => 'in.c-test-01.' . IdGenerator::generateFileName(getenv('KBC_CONFIGID'), $query),
 					'delimiter' => ',',
 					'enclosure' => '',
-					'primaryKey' => $query['primaryKey'],
+					'primary_key' => $query['primaryKey'],
 					'incremental' => $query['incremental'],
 
 				];
