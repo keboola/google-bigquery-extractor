@@ -25,6 +25,47 @@ class Client extends RestApi
 		}
 	}
 
+	public function listProjects()
+	{
+		$return = array();
+		$pageToken = null;
+
+		try {
+			while($pageToken !== false) {
+				$params = array(
+					'maxResults' => self::PAGING,
+				);
+
+				if ($pageToken) {
+					$params['pageToken'] = $pageToken;
+				}
+
+				$url = 'https://www.googleapis.com/bigquery/v2/projects';
+
+				$response = $this->request($url, 'GET', array(), $params);
+				$response = \GuzzleHttp\json_decode($response->getBody(), true);
+				if (!array_key_exists('nextPageToken', $response)) {
+					$pageToken = false;
+				} else {
+					$pageToken = $response['nextPageToken'];
+				}
+
+				if (!empty($response['projects'])) {
+					foreach ($response['projects'] AS $project) {
+						$return[] = array(
+							'id' => $project['id'],
+							'name' => $project['friendlyName'],
+						);
+					}
+				}
+			}
+		} catch (RequestException $e) {
+			throw $e;
+		}
+
+		return $return;
+	}
+
 	/**
 	 * @param $account
 	 * @param $config

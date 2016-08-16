@@ -1,6 +1,7 @@
 <?php
 namespace Keboola\Google\BigQuery\Configuration;
 
+use Keboola\Google\BigQuery\Exception\UserException;
 use Keboola\Google\BigQuery\Extractor;
 use Keboola\Google\BigQuery\RestApi\Client;
 use Keboola\Google\BigQuery\RestApi\IdGenerator;
@@ -34,7 +35,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @dataProvider configData
 	 */
-	public function testExtractor($query)
+	public function testRun($query)
 	{
 		$this->cleanupExtraction($query);
 
@@ -63,6 +64,73 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
 		$this->validateCleanup($query);
 		$this->validateExtraction($query);
+	}
+
+	public function testListProjects()
+	{
+		$logger = new \Monolog\Logger(APP_NAME, array(
+			(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
+			(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+		));
+
+		$config = [
+			"action" => "listProjects",
+			"parameters" => [
+			],
+			"authorization" => [
+				"oauth_api" => [
+					"credentials" => [
+						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+					]
+				]
+			]
+		];
+
+		$extractor = new Extractor(["logger" => $logger]);
+		$result = $extractor->setConfig($config)->run();
+
+		$this->assertTrue(count($result) > 0);
+
+		foreach ($result AS $metaData) {
+			$this->assertArrayHasKey('id', $metaData);
+			$this->assertArrayHasKey('name', $metaData);
+		}
+	}
+
+	public function testInvalidAction()
+	{
+		$logger = new \Monolog\Logger(APP_NAME, array(
+			(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
+			(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+		));
+
+		$config = [
+			"action" => "invalid",
+			"parameters" => [
+			],
+			"authorization" => [
+				"oauth_api" => [
+					"credentials" => [
+						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+					]
+				]
+			]
+		];
+
+		$extractor = new Extractor(["logger" => $logger]);
+		$extractor->setConfig($config);
+
+		try {
+			$extractor->run();
+
+			$this->fail("Calling nonexisting action should produce error");
+		} catch (UserException $e) {
+
+		}
 	}
 
 	private function cleanupExtraction($query)

@@ -22,6 +22,8 @@ class Extractor
 
 	private $params = [];
 
+	private $action = 'run';
+
 	public function __construct(array $options = [])
 	{
 		if (isset($options['logger']) && $options['logger'] instanceof LoggerInterface) {
@@ -41,6 +43,10 @@ class Extractor
 	public function setConfig($params)
 	{
 		$this->params = [];
+
+		if (isset($params['action'])) {
+			$this->action = $params['action'];
+		}
 
 		if (!isset($params['authorization'])) {
 			throw new UserException(UserException::ERR_MISSING_OAUTH_CONFIG);
@@ -98,7 +104,19 @@ class Extractor
 			throw new \RuntimeException("Missing configuration");
 		}
 
-		return $this->processRunAction();
+		$method = sprintf('process%sAction', ucfirst($this->action));
+		if (!method_exists($this, $method)) {
+			throw new UserException(sprintf("Action '%s' does not exist.", $this->action));
+		}
+
+		return $this->$method();
+	}
+
+	private function processListProjectsAction()
+	{
+		$google = $this->initGoogle();
+
+		return $google->listProjects();
 	}
 
 	private function processRunAction()
