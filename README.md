@@ -18,6 +18,7 @@ Main functionality
     - `projectId` - ID of the BigQuery project that will be billed for the job
     - `flattenResults` - *(optional)* Flattens all nested and repeated fields in the query results. *(default is true)*
     - `storage` - URI of existing Google Cloud Storage bucket, where data will be exported
+    - `outputTable` *(optional)* - destination table ID in Keboola Connection *(if empty, will be generated automatically from query name)*
     - `primaryKey` *(optional)* - primary key in Keboola Connection
     - `incremental` *(optional)* - use incremental import to Keboola Connection *(default is false)*
 
