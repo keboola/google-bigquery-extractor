@@ -17,7 +17,22 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		return [
 			[
 				[
-					"name" => "ex-google-bigquery-test",
+					"name" => "Big Query Test",
+					"query" => "
+									SELECT * FROM [publicdata:samples.natality]
+									WHERE [publicdata:samples.natality.year] = 1985
+									AND [publicdata:samples.natality.state] = 'FL' LIMIT 10
+								",
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"incremental" => true,
+					"primaryKey" => ["year", "month", "day"],
+				]
+			],
+			[
+				[
+					"name" => "Big Query Test with destination",
+					"outputTable" => "in.c-tests.tableId",
 					"query" => "
 									SELECT * FROM [publicdata:samples.natality]
 									WHERE [publicdata:samples.natality.year] = 1985
@@ -205,7 +220,15 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
 				$this->assertTrue($params['incremental']);
 				$this->assertEquals($query['primaryKey'], $params['primary_key']);
-				$this->assertTrue($params['incremental']);
+
+				var_dump(IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query));
+				var_dump($params['destination']);
+
+				$this->assertEquals(IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query), $params['destination']);
+
+				if (isset($query['outputTable'])) {
+					$this->assertEquals($query['outputTable'], $params['destination']);
+				}
 
 				$manifestValidated = true;
 			}

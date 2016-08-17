@@ -78,6 +78,15 @@ class IdGenerator
 		return $tableName;
 	}
 
+	public static function generateOutputTableId($account, $config)
+	{
+		if (isset($config['outputTable'])) {
+			return $config['outputTable'];
+		} else {
+			return 'in.c-keboola-ex-bigquery.' . IdGenerator::generateFileName($account, $config);
+		}
+	}
+
 	public static function generateFileName($account, $config)
 	{
 		//Convert name to ID stripping non-alfanumeric chars

@@ -175,7 +175,7 @@ class Extractor
 				file_put_contents($filePath, $response->getBody());
 
 				$manifest = [
-					'destination' => 'in.c-test-01.' . IdGenerator::generateFileName(getenv('KBC_CONFIGID'), $query),
+					'destination' => IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query),
 					'delimiter' => ',',
 					'enclosure' => '',
 					'primary_key' => $query['primaryKey'],

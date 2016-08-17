@@ -39,6 +39,8 @@ class ParamsDefinition implements ConfigurationInterface
 								->isRequired()
 								->cannotBeEmpty()
 								->end()
+							->scalarNode('outputTable')
+								->end()
 							->booleanNode('flattenResults')
 								->defaultValue(true)
 								->end()

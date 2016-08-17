@@ -5,6 +5,7 @@
         "name": "US Natality statistics",
         "query": "SELECT * FROM [dataSet.someTable] LIMIT 10",
         "storage": "gs://some-bucket",
+        "outputTable": "in.c-extractor.table",
         "primaryKey": [ "id", "parentId"],
         "incremental": true,
         "projectId": "some-project-123",
