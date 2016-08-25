@@ -1,5 +1,9 @@
 {
   "parameters": {
+    "google": {
+      "projectId": "some-project-123",
+      "storage": "gs://some-bucket"
+    },
     "queries": []
   },
   "authorization": {

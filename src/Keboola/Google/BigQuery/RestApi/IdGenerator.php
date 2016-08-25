@@ -8,9 +8,10 @@ class IdGenerator
 	 * Generate path for exporting table to Cloud Storage files
 	 *
 	 * @param $config
+	 * @param $project
 	 * @return string
 	 */
-	public static function generateExportPath($account, $config)
+	public static function generateExportPath($account, $config, $project)
 	{
 		//Convert name to ID stripping non-alfanumeric chars
 		$dirName = preg_replace("/[^A-Za-z0-9_\s-]/", "", $account);
@@ -21,7 +22,7 @@ class IdGenerator
 
 		return sprintf(
 			"%s/runId-%s/%s/%s_*.%s.gz",
-			$config['storage'],
+			$project['storage'],
 			getenv('KBC_RUNID'),
 			$dirName,
 			IdGenerator::generateFileName($account, $config),
@@ -34,12 +35,13 @@ class IdGenerator
 	 *
 	 * @param $account
 	 * @param $config
+	 * @param $project
 	 * @return string
 	 */
-	public static function generateExportMask($account, $config)
+	public static function generateExportMask($account, $config, $project)
 	{
 		$matches = array();
-		if (!preg_match('/^gs\:\/\/([^\/]+)(.*)/ui', $config['storage'], $matches)) {
+		if (!preg_match('/^gs\:\/\/([^\/]+)(.*)/ui', $project['storage'], $matches)) {
 			throw new \InvalidArgumentException("Invalid Cloud Storage Path given");
 		}
 

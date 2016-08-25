@@ -2,7 +2,5 @@ parameters:
   queries:
     - name: "US Natality statistics"
       query: null
-      storage: "gs://some-bucket"
       primaryKey: [ id, parentId ]
       incremental: true
-      projectId: some-project-123

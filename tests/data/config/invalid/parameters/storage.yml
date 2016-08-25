@@ -1,8 +1,9 @@
 parameters:
+  google:
+    projectId: some-project-123
+    storage: null
   queries:
     - name: "US Natality statistics"
       query: "SELECT * FROM [dataSet.someTable] LIMIT 10"
-      storage: null
       primaryKey: [ id, parentId ]
       incremental: true
-      projectId: some-project-123

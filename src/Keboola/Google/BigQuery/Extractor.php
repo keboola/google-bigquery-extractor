@@ -129,6 +129,7 @@ class Extractor
 	private function processRunAction()
 	{
 		$google = $this->initGoogle();
+		$project = $this->params['parameters']['google'];
 
 		$dirPath = getenv('KBC_DATADIR') . '/out/tables';
 		if (!file_exists($dirPath) || !is_dir($dirPath)) {
@@ -141,6 +142,7 @@ class Extractor
 			$job = Job::buildQuery(
 				getenv('KBC_CONFIGID'),
 				$query,
+				$project,
 				$google,
 				$this->logger
 			);
@@ -153,13 +155,14 @@ class Extractor
 			$job = Job::buildExport(
 				getenv('KBC_CONFIGID'),
 				$query,
+				$project,
 				$google,
 				$this->logger
 			);
 			$job->execute($google);
 
 
-			$result = $google->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query);
+			$result = $google->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query, $project);
 			$this->logger->info(sprintf('%s: Starting download of %s files', $query["name"], count($result)));
 
 

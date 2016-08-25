@@ -188,11 +188,12 @@ class Job
 	 *
 	 * @param $account
 	 * @param $config
+	 * @param $project
 	 * @param Client $client
 	 * @param LoggerInterface $logger
 	 * @return Job
 	 */
-	public static function buildQuery($account, $config, Client $client, LoggerInterface $logger)
+	public static function buildQuery($account, $config, $project, Client $client, LoggerInterface $logger)
 	{
 		$params = array(
 			"configuration" => array(
@@ -201,7 +202,7 @@ class Job
 					"allowLargeResults" => true,
 					"query" => $config['query'],
 					"destinationTable" => array(
-						'projectId' => $config['projectId'],
+						'projectId' => $project['projectId'],
 						'datasetId' => self::CACHE_DATASET_ID,
 						'tableId' => IdGenerator::generateTableName($account, $config),
 					),
@@ -211,7 +212,7 @@ class Job
 			)
 		);
 
-		$job = new Job($config['name'], $account, $params, $config['projectId'], $logger);
+		$job = new Job($config['name'], $account, $params, $project['projectId'], $logger);
 
 		$job->initDataset($client);
 
@@ -222,11 +223,12 @@ class Job
 	 * Build extract job, validate destionation dataset
 	 * @param $account
 	 * @param $config
+	 * @param $project
 	 * @param Client $client
 	 * @param LoggerInterface $logger
 	 * @return Job
 	 */
-	public static function buildExport($account, $config, Client $client, LoggerInterface $logger)
+	public static function buildExport($account, $config, $project, Client $client, LoggerInterface $logger)
 	{
 		$format = strtoupper($config['format']);
 		if ($format == 'JSON') {
@@ -239,18 +241,18 @@ class Job
 					"compression" => "GZIP",
 					"destinationFormat" => $format,
 					"sourceTable" => array(
-						'projectId' => $config['projectId'],
+						'projectId' => $project['projectId'],
 						'datasetId' => self::CACHE_DATASET_ID,
 						'tableId' => IdGenerator::generateTableName($account, $config),
 					),
 					"printHeader" => true,
 					"destinationUris" => array(
-						IdGenerator::generateExportPath($account, $config)
+						IdGenerator::generateExportPath($account, $config, $project)
 					)
 				),
 			)
 		);
 
-		return new Job($config['name'], $account, $params, $config['projectId'], $logger);
+		return new Job($config['name'], $account, $params, $project['projectId'], $logger);
 	}
 }

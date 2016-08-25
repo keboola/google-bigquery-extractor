@@ -69,13 +69,14 @@ class Client extends RestApi
 	/**
 	 * @param $account
 	 * @param $config
+	 * @param $project
 	 * @return array
 	 * @throws \Keboola\Google\ClientBundle\Exception\RestApiException
 	 */
-	public function listCloudStorageFiles($account, $config)
+	public function listCloudStorageFiles($account, $config, $project)
 	{
 		$matches = array();
-		if (!preg_match('/^gs\:\/\/([^\/]+)(.*)/ui', $config['storage'], $matches)) {
+		if (!preg_match('/^gs\:\/\/([^\/]+)(.*)/ui', $project['storage'], $matches)) {
 			throw new \InvalidArgumentException("Invalid Cloud Storage Path given");
 		}
 
@@ -87,7 +88,7 @@ class Client extends RestApi
 
 		$params = array(
 			'fields' => 'items(mediaLink,id,name,bucket),nextPageToken,prefixes',
-			'prefix' => IdGenerator::generateExportMask($account, $config)
+			'prefix' => IdGenerator::generateExportMask($account, $config, $project)
 		);
 
 		$return = array();

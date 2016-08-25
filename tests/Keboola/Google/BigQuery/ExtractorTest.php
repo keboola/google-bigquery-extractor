@@ -23,8 +23,6 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 									WHERE [publicdata:samples.natality.year] = 1985
 									AND [publicdata:samples.natality.state] = 'FL' LIMIT 10
 								",
-					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
-					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
 					"incremental" => true,
 					"primaryKey" => ["year", "month", "day"],
 				]
@@ -38,8 +36,6 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 									WHERE [publicdata:samples.natality.year] = 1985
 									AND [publicdata:samples.natality.state] = 'FL' LIMIT 10
 								",
-					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
-					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
 					"incremental" => true,
 					"primaryKey" => ["year", "month", "day"],
 				]
@@ -61,6 +57,10 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
 		$config = [
 			"parameters" => [
+				"google" => [
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+				],
 				"queries" => [$query]
 			],
 			"authorization" => [
@@ -77,8 +77,8 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$extractor = new Extractor(["logger" => $logger]);
 		$extractor->setConfig($config)->run();
 
-		$this->validateCleanup($query);
-		$this->validateExtraction($query);
+		$this->validateCleanup($query, $config['parameters']['google']);
+		$this->validateExtraction($query, $config['parameters']['google']);
 	}
 
 	public function testListProjects()
@@ -91,6 +91,10 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$config = [
 			"action" => "listProjects",
 			"parameters" => [
+				"google" => [
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+				],
 			],
 			"authorization" => [
 				"oauth_api" => [
@@ -129,6 +133,10 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$config = [
 			"action" => "invalid",
 			"parameters" => [
+				"google" => [
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+				],
 			],
 			"authorization" => [
 				"oauth_api" => [
@@ -183,7 +191,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		}
 	}
 
-	private function validateExtraction($query)
+	private function validateExtraction($query, $project)
 	{
 		$dirPath = getenv('KBC_DATADIR') . '/out/tables';
 
@@ -221,9 +229,6 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 				$this->assertTrue($params['incremental']);
 				$this->assertEquals($query['primaryKey'], $params['primary_key']);
 
-				var_dump(IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query));
-				var_dump($params['destination']);
-
 				$this->assertEquals(IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query), $params['destination']);
 
 				if (isset($query['outputTable'])) {
@@ -248,7 +253,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
 	}
 
-	private function validateCleanup($query)
+	private function validateCleanup($query, $project)
 	{
 		// validation of clenaup
 		$client = new Client(BIGQUERY_EXTRACTOR_APP_KEY, BIGQUERY_EXTRACTOR_APP_SECRET);
@@ -256,7 +261,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$data = json_decode(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON, true);
 		$client->setCredentials($data['access_token'], $data['refresh_token']);
 
-		$files = $client->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query);
+		$files = $client->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query, $project);
 		$this->assertCount(0, $files);
 		return true;
 	}
