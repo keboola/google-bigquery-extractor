@@ -2,6 +2,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+const APP_NAME = 'ex-google-bigquery';
 
 $appKey = getenv('ENV_BIGQUERY_EXTRACTOR_APP_KEY');
 $appSecret = getenv('ENV_BIGQUERY_EXTRACTOR_APP_SECRET');
