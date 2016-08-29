@@ -22,6 +22,7 @@ Main functionality
     - `outputTable` *(optional)* - destination table ID in Keboola Connection *(if empty, will be generated automatically from query name)*
     - `primaryKey` *(optional)* - primary key in Keboola Connection
     - `incremental` *(optional)* - use incremental import to Keboola Connection *(default is false)*
+    - `enabled` *(optional)* - process extraction of this query *(default is true)*
 
 Google is slicing large results to multiple files. Primary key shoudl be defined.
 
