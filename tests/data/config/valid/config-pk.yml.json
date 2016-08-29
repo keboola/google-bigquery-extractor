@@ -11,7 +11,8 @@
         "outputTable": "in.c-extractor.table",
         "primaryKey": [ "id", "parentId"],
         "incremental": true,
-        "flattenResults": true
+        "flattenResults": true,
+        "enabled": true
       }
     ]
   },
