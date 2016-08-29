@@ -6,11 +6,13 @@
     },
     "queries": [
       {
+        "id": 123,
         "name": "US Natality statistics",
         "query": "SELECT * FROM [dataSet.someTable] LIMIT 10",
         "primaryKey": [],
         "incremental": false,
-        "flattenResults": true
+        "flattenResults": true,
+        "enabled": true
       }
     ]
   },

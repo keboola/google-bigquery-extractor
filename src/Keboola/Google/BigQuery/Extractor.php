@@ -137,81 +137,86 @@ class Extractor
 		}
 
 		foreach ($this->params['parameters']['queries'] AS $query) {
-			$query["format"] = "csv";
-			// execute query
-			$job = Job::buildQuery(
-				getenv('KBC_CONFIGID'),
-				$query,
-				$project,
-				$google,
-				$this->logger
-			);
+			if ($query['enabled'] !== true) {
+				$this->logger->info(sprintf('%s: Skipped', $query["name"]));
+			} else {
+				$query["format"] = "csv";
+				// execute query
+				$job = Job::buildQuery(
+					getenv('KBC_CONFIGID'),
+					$query,
+					$project,
+					$google,
+					$this->logger
+				);
 
-			$job->execute($google);
+				$job->execute($google);
 
 //			@FIXME each job should log result to info
 
-			// export to csv
-			$job = Job::buildExport(
-				getenv('KBC_CONFIGID'),
-				$query,
-				$project,
-				$google,
-				$this->logger
-			);
-			$job->execute($google);
+				// export to csv
+				$job = Job::buildExport(
+					getenv('KBC_CONFIGID'),
+					$query,
+					$project,
+					$google,
+					$this->logger
+				);
+				$job->execute($google);
 
 
-			$result = $google->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query, $project);
-			$this->logger->info(sprintf('%s: Starting download of %s files', $query["name"], count($result)));
+				$result = $google->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query, $project);
+				$this->logger->info(sprintf('%s: Starting download of %s files', $query["name"], count($result)));
 
 
-			foreach ($result AS $cloudFileInfo) {
-				$fileName = $cloudFileInfo['name'];
-				$fileName =  explode('/', $fileName);
-				$fileName = $fileName[count($fileName) -1];
+				foreach ($result AS $cloudFileInfo) {
+					$fileName = $cloudFileInfo['name'];
+					$fileName =  explode('/', $fileName);
+					$fileName = $fileName[count($fileName) -1];
 
-				$response = $google->request($cloudFileInfo['mediaLink']);
+					$response = $google->request($cloudFileInfo['mediaLink']);
 
-				$filePath = $dirPath . '/' . $fileName;
+					$filePath = $dirPath . '/' . $fileName;
 
-				file_put_contents($filePath, $response->getBody());
+					file_put_contents($filePath, $response->getBody());
 
-				$manifest = [
-					'destination' => IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query),
-					'delimiter' => ',',
-					'enclosure' => '',
-					'primary_key' => $query['primaryKey'],
-					'incremental' => $query['incremental'],
+					$manifest = [
+						'destination' => IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query),
+						'delimiter' => ',',
+						'enclosure' => '',
+						'primary_key' => $query['primaryKey'],
+						'incremental' => $query['incremental'],
 
-				];
+					];
 
-				file_put_contents($filePath . '.manifest', Yaml::dump($manifest));
-				$this->logger->info(sprintf('%s: %s downloaded', $query["name"], $fileName));
-			}
-
-			if (!count($result)) {
-				$this->logger->info(sprintf('%s: Any Cloud Storage cleanup needed', $query["name"]));
-				continue;
-			}
-
-			$this->logger->info(sprintf('%s: Cloud Storage cleanup start (%s files)', $query["name"], count($result)));
-
-			foreach ($result AS $cloudFileInfo) {
-				$fileName = $cloudFileInfo['name'];
-				$fileName =  explode('/', $fileName);
-				$fileName = $fileName[count($fileName) -1];
-
-				if ($google->deleteCloudStorageFile($cloudFileInfo)) {
-					$this->logger->info(sprintf('%s: File %s removed', $query["name"], $fileName));
-				} else {
-					$this->logger->error(sprintf('%s: File %s was not removed', $query["name"], $fileName));
-					//@FIXME log error response
-					throw new UserException("Cloud Storage file was not removed");
+					file_put_contents($filePath . '.manifest', Yaml::dump($manifest));
+					$this->logger->info(sprintf('%s: %s downloaded', $query["name"], $fileName));
 				}
+
+				if (!count($result)) {
+					$this->logger->info(sprintf('%s: Any Cloud Storage cleanup needed', $query["name"]));
+					continue;
+				}
+
+				$this->logger->info(sprintf('%s: Cloud Storage cleanup start (%s files)', $query["name"], count($result)));
+
+				foreach ($result AS $cloudFileInfo) {
+					$fileName = $cloudFileInfo['name'];
+					$fileName =  explode('/', $fileName);
+					$fileName = $fileName[count($fileName) -1];
+
+					if ($google->deleteCloudStorageFile($cloudFileInfo)) {
+						$this->logger->info(sprintf('%s: File %s removed', $query["name"], $fileName));
+					} else {
+						$this->logger->error(sprintf('%s: File %s was not removed', $query["name"], $fileName));
+						//@FIXME log error response
+						throw new UserException("Cloud Storage file was not removed");
+					}
+				}
+
+				$this->logger->info(sprintf('%s: Cloud Storage cleanup finished', $query["name"]));
 			}
 
-			$this->logger->info(sprintf('%s: Cloud Storage cleanup finished', $query["name"]));
 		}
 
 		return null;

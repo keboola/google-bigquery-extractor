@@ -3,11 +3,13 @@ parameters:
     projectId: some-project-123
     storage: "gs://some-bucket"
   queries:
-    - name: "US Natality statistics"
+    - id: 123
+      name: "US Natality statistics"
       query: "SELECT * FROM [dataSet.someTable] LIMIT 10"
       primaryKey: null
       incremental: false
       flattenResults: true
+      enabled: true
 authorization:
   oauth_api:
     credentials:

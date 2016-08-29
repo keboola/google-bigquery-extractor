@@ -8,6 +8,7 @@ parameters:
       outputTable: "in.c-extractor.table"
       primaryKey: [ id, parentId ]
       incremental: true
+      enabled: true
 authorization:
   oauth_api:
     credentials:
