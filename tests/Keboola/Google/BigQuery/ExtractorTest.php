@@ -7,6 +7,7 @@ use Keboola\Google\BigQuery\RestApi\Client;
 use Keboola\Google\BigQuery\RestApi\IdGenerator;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
+use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Symfony\Component\Yaml\Yaml;
 
@@ -39,6 +40,20 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 					"incremental" => true,
 					"primaryKey" => ["year", "month", "day"],
 				]
+			],
+			[
+				[
+					"name" => "Big Query Test disabled",
+					"outputTable" => "in.c-tests.tableId",
+					"query" => "
+									SELECT * FROM [publicdata:samples.natality]
+									WHERE [publicdata:samples.natality.year] = 1985
+									AND [publicdata:samples.natality.state] = 'FL' LIMIT 10
+								",
+					"incremental" => true,
+					"enabled" => false,
+					"primaryKey" => ["year", "month", "day"],
+				]
 			]
 		];
 	}
@@ -50,9 +65,14 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 	{
 		$this->cleanupExtraction($query);
 
+		$enabled = (!isset($query['enabled']) || $query['enabled'] === true) ? true : false;
+
+		$testHandler = new TestHandler(Logger::INFO);
+
 		$logger = new \Monolog\Logger(APP_NAME, array(
 			(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
 			(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+			$testHandler,
 		));
 
 		$config = [
@@ -78,7 +98,27 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$extractor->setConfig($config)->run();
 
 		$this->validateCleanup($query, $config['parameters']['google']);
-		$this->validateExtraction($query, $config['parameters']['google']);
+		$this->validateExtraction($query, $config['parameters']['google'], $enabled ? 2 : 0);
+
+		if (!$enabled) {
+			$this->validateSkipped($query, $testHandler);
+		}
+	}
+
+	private function validateSkipped($query, TestHandler $handler)
+	{
+		$records = $handler->getRecords();
+
+		$this->assertCount(1, $records);
+
+		$skippedQuery = false;
+		if (strpos($records[0]['message'], $query['name']) !== false) {
+			if (strpos($records[0]['message'], 'Skipped') !== false) {
+				$skippedQuery = true;
+			}
+		}
+
+		$this->assertTrue($skippedQuery);
 	}
 
 	public function testListProjects()
@@ -191,7 +231,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		}
 	}
 
-	private function validateExtraction($query, $project)
+	private function validateExtraction($query, $project, $expectedFiles = 2)
 	{
 		$dirPath = getenv('KBC_DATADIR') . '/out/tables';
 
@@ -212,7 +252,11 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 			)
 		);
 
-		$this->assertCount(2, $files);
+		$this->assertCount($expectedFiles, $files);
+
+		if($expectedFiles < 1) {
+			return;
+		}
 
 		$manifestValidated = false;
 		$csvValidated = false;
