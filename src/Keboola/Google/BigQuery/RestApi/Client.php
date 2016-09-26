@@ -16,7 +16,7 @@ class Client extends RestApi
 			$objectUrl = 'https://www.googleapis.com/storage/v1/b/%s/o/%s';
 			$objectUrl = sprintf($objectUrl, $fileInfo['bucket'], urlencode($fileInfo['name']));
 
-			$objectResponse = $this->request($objectUrl, 'DELETE', array(), array());
+			$objectResponse = $this->request($objectUrl, 'DELETE', [], []);
 
 			$statusCode = $objectResponse->getStatusCode();
 			return ($statusCode == 204);
@@ -42,7 +42,7 @@ class Client extends RestApi
 
 				$url = 'https://www.googleapis.com/bigquery/v2/projects';
 
-				$response = $this->request($url, 'GET', array(), $params);
+				$response = $this->request($url, 'GET', [], ['query' => $params]);
 				$response = \GuzzleHttp\json_decode($response->getBody(), true);
 				if (!array_key_exists('nextPageToken', $response)) {
 					$pageToken = false;
@@ -99,7 +99,8 @@ class Client extends RestApi
 				$params['maxResults'] = Client::PAGING;
 				$params['pageToken'] = $pageToken;
 
-				$response = $this->request($url, 'GET', array(), $params);
+
+				$response = $this->request($url, 'GET', [], ['query' => $params]);
 
 				$response = \GuzzleHttp\json_decode($response->getBody(), true);
 				if (!array_key_exists('nextPageToken', $response)) {
