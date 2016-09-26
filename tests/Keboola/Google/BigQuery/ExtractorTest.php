@@ -13,6 +13,46 @@ use Symfony\Component\Yaml\Yaml;
 
 class ExtractorTest extends \PHPUnit_Framework_TestCase
 {
+	/**
+	 * Cleanup workspace
+	 */
+	public function setUp()
+	{
+		$client = new Client(BIGQUERY_EXTRACTOR_APP_KEY, BIGQUERY_EXTRACTOR_APP_SECRET);
+
+		$data = json_decode(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON, true);
+		$client->setCredentials($data['access_token'], $data['refresh_token']);
+
+		$url = 'https://www.googleapis.com/storage/v1/b/' . str_replace('gs://', '', BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET) . '/o';
+
+		$params = array(
+			'fields' => 'items(mediaLink,id,name,bucket),nextPageToken,prefixes',
+		);
+
+		$pageToken = null;
+
+		while($pageToken !== false) {
+			$params['maxResults'] = Client::PAGING;
+			$params['pageToken'] = $pageToken;
+
+			$response = $client->request($url, 'GET', [], ['query' => $params]);
+
+			$response = \GuzzleHttp\json_decode($response->getBody(), true);
+			if (!array_key_exists('nextPageToken', $response)) {
+				$pageToken = false;
+			} else {
+				$pageToken = $response['nextPageToken'];
+			}
+
+			if (!empty($response['items'])) {
+				foreach ($response['items'] AS $file) {
+					$client->deleteCloudStorageFile($file);
+				}
+			}
+		}
+
+	}
+
 	public function configData()
 	{
 		return [
@@ -359,7 +399,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 					]
 				);
 
-				$fileInfos[] = json_decode($response->getBody()->getContents(), true);
+				$fileInfos[] = \GuzzleHttp\json_decode($response->getBody(), true);
 			}
 
 
