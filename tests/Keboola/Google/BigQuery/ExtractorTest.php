@@ -309,4 +309,79 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$this->assertCount(0, $files);
 		return true;
 	}
+
+	public function testListFiles()
+	{
+		// validation of clenaup
+		$client = new Client(BIGQUERY_EXTRACTOR_APP_KEY, BIGQUERY_EXTRACTOR_APP_SECRET);
+
+		$data = json_decode(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON, true);
+		$client->setCredentials($data['access_token'], $data['refresh_token']);
+
+		$fileInfos = [];
+		$account = 'test-list';
+
+
+		$queries = [
+			'first query' => 2,
+			'second query' => 1,
+		];
+
+		// file creation
+		foreach ($queries AS $queryName => $fileCount) {
+			$filePath = IdGenerator::generateExportPath(
+				$account,
+				[
+					'name' => $queryName,
+					'format' => 'csv',
+				],
+				[
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+				]
+			);
+
+			$filePath = str_replace(BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET, '', $filePath);
+			$filePath = trim($filePath, '/');
+			$filePath = explode('*', $filePath, 2);
+			$filePath = $filePath[0];
+
+			for ($i = 0; $i < $fileCount; $i++) {
+				$response = $client->request(
+					'https://www.googleapis.com/upload/storage/v1/b/' . str_replace('gs://', '', BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET) . '/o',
+					'POST',
+					[],
+					[
+						'query' => [
+							'uploadType' => 'media',
+							'name' => $filePath . '-' . $i,
+						]
+					]
+				);
+
+				$fileInfos[] = json_decode($response->getBody()->getContents(), true);
+			}
+
+
+		}
+
+		// files count validation
+		foreach ($queries AS $queryName => $fileCount) {
+			$files = $client->listCloudStorageFiles(
+				$account,
+				[
+					'name' => $queryName,
+					'format' => 'csv',
+				],
+				[
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+				]
+			);
+
+			$this->assertEquals($fileCount, count($files));
+		}
+
+		return true;
+	}
 }
