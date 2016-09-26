@@ -170,8 +170,6 @@ class Extractor
 
 
 				foreach ($result AS $cloudFileInfo) {
-					$this->logger->info(json_encode($cloudFileInfo));
-
 					$fileName = $cloudFileInfo['name'];
 					$fileName =  explode('/', $fileName);
 					$fileName = $fileName[count($fileName) -1];
@@ -179,7 +177,6 @@ class Extractor
 					$response = $google->request($cloudFileInfo['mediaLink']);
 
 					$filePath = $dirPath . '/' . $fileName;
-					$this->logger->info($filePath);
 					file_put_contents($filePath, $response->getBody());
 
 					$manifest = [
