@@ -98,6 +98,60 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		];
 	}
 
+	public function testUserError()
+	{
+		$query = [
+			"name" => "Big Query Test",
+			"enabled" => true,
+			"query" => "
+									SELECT * FROM [publicdata:samples.natality]
+									WHERE [publicdata:samples.natality.year] = 1985
+									AND [publicdata:samples.natality.state] = 'FL' LIMIT 10
+								",
+			"incremental" => true,
+			"primaryKey" => ["year", "month", "day"],
+		];
+
+		$this->cleanupExtraction($query);
+
+		$enabled = true;
+
+		$testHandler = new TestHandler(Logger::INFO);
+
+		$logger = new \Monolog\Logger(APP_NAME, array(
+			(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
+			(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+			$testHandler,
+		));
+
+		$config = [
+			"parameters" => [
+				"google" => [
+					"projectId" => BIGQUERY_EXTRACTOR_NONBILLABLE_GOOGLE_PROJECT,
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+				],
+				"queries" => [$query]
+			],
+			"authorization" => [
+				"oauth_api" => [
+					"credentials" => [
+						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+					]
+				]
+			]
+		];
+
+		$extractor = new Extractor(["logger" => $logger]);
+
+		try {
+			$extractor->setConfig($config)->run();
+			$this->fail("Config with non-billable project shloud produce error");
+		} catch (UserException $e) {
+		}
+	}
+
 	/**
 	 * @dataProvider configData
 	 */
