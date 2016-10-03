@@ -35,6 +35,35 @@ class Job
 	}
 
 	/**
+	 *
+	 * @param RequestException $e
+	 */
+	private function processRequestException(RequestException $e)
+	{
+		if ($e->getResponse() && $e->getResponse()->getStatusCode() < 500) {
+			$responseBody = \GuzzleHttp\json_decode($e->getResponse()->getBody(), true);
+
+			if (!empty($responseBody['error']['errors'])) {
+				foreach ($responseBody['error']['errors'] AS $error) {
+					$message = '';
+					if (isset($error['location'])) {
+						$message .= '[' . mb_strtoupper($error['location']) . '] ';
+					}
+					if (isset($error['reason'])) {
+						$message .= '[' . mb_strtoupper($error['reason']) . '] ';
+					}
+					if (isset($error['message'])) {
+						$message .= $error['message'];
+					}
+					throw new UserException("Google API Error: " . $message);
+				}
+			}
+		}
+
+		throw $e;
+	}
+
+	/**
 	 * Check if dataset exist, if not try create it
 	 *
 	 * @param Client $client
@@ -60,7 +89,7 @@ class Job
 			if ($e->getCode() == 404) {
 				$datasetExists = false;
 			} else {
-				throw $e;
+				$this->processRequestException($e);
 			}
 		}
 
@@ -76,15 +105,21 @@ class Job
 
 			$this->logger->info(sprintf('%s: Creating dataset "%s"', $this->name, $datasetId));
 
-			$response = $client->request($url, 'POST', ['content-type' => 'application/json'], ["json" => $params]);
+			try {
+				$response = $client->request($url, 'POST', ['content-type' => 'application/json'], ["json" => $params]);
 
-			$responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
-			if ($response->getStatusCode() != 200 || empty($responseBody['selfLink'])) {
-				throw new ExtractorException('Could not create query dataset');
+				$responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
+				if ($response->getStatusCode() != 200 || empty($responseBody['selfLink'])) {
+					throw new ExtractorException('Could not create query dataset');
+				}
+
+				$datasetExists = true;
+				$this->logger->info(sprintf('%s: Dataset "%s" created', $this->name, $datasetId));
+			} catch (RequestException $e) {
+				$this->processRequestException($e);
 			}
 
-			$datasetExists = true;
-			$this->logger->info(sprintf('%s: Dataset "%s" created', $this->name, $datasetId));
+
 		}
 
 		return $datasetExists;
@@ -143,7 +178,7 @@ class Job
 
 				$responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
 			} catch (RequestException $e) {
-				throw $e;
+				$this->processRequestException($e);
 			}
 
 			$this->logger->debug(sprintf('%s: Polling query job', $this->name));
