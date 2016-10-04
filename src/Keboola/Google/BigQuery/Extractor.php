@@ -85,7 +85,7 @@ class Extractor
 		try {
 			$processor = new Processor();
 			$processedParameters = $processor->processConfiguration(
-				new ParamsDefinition(),
+				new ParamsDefinition($this->action),
 				[$params['parameters']]
 			);
 
@@ -114,6 +114,17 @@ class Extractor
 		}
 
 		return $this->$method();
+	}
+
+	private function processListBucketsAction()
+	{
+		$google = $this->initGoogle();
+		$project = $this->params['parameters']['google'];
+
+		return [
+			'status' => 'success',
+			'buckets' => $google->listBuckets($project),
+		];
 	}
 
 	private function processListProjectsAction()

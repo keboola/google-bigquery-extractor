@@ -103,7 +103,7 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
 		// params validation
 		$processor = new Processor();
 		$parsedParams['parameters'] = $processor->processConfiguration(
-			new ParamsDefinition(),
+			new ParamsDefinition(!empty($params['action']) ? $params['action'] : 'run'),
 			[$params['parameters']]
 		);
 
@@ -131,7 +131,7 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
 
 			$processor = new Processor();
 			$processor->processConfiguration(
-				new ParamsDefinition(),
+				new ParamsDefinition(!empty($params['action']) ? $params['action'] : 'run'),
 				[$params['parameters']]
 			);
 

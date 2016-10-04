@@ -6,6 +6,12 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class ParamsDefinition implements ConfigurationInterface
 {
+	private $action;
+
+	public function __construct($action = 'run')
+	{
+		$this->action = (string) $action;
+	}
 
 	/**
 	 * Generates the configuration tree builder.
@@ -17,22 +23,27 @@ class ParamsDefinition implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('parameters');
 
+		// google params
+		$google = $rootNode->children()->arrayNode('google');
+		if ($this->action !== 'listProjects') {
+			$google->isRequired();
+		}
+
+		// billable bigquery project
+		$param = $google->children()->scalarNode('projectId');
+		if ($this->action !== 'listProjects') {
+			$param->isRequired()->cannotBeEmpty();
+		}
+
+		// cloud storage bucket
+		$param = $google->children()->scalarNode('storage');
+		if ($this->action !== 'listBuckets' && $this->action !== 'listProjects') {
+			$param->isRequired()->cannotBeEmpty();
+		}
+
 		// queries
 		$rootNode
 			->children()
-				->arrayNode('google')
-					->isRequired()
-					->children()
-						->scalarNode('projectId')
-							->isRequired()
-							->cannotBeEmpty()
-							->end()
-						->scalarNode('storage')
-							->isRequired()
-							->cannotBeEmpty()
-							->end()
-						->end()
-					->end()
 				->arrayNode('queries')
 					->prototype('array')
 						->children()

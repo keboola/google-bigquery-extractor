@@ -53,6 +53,91 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
 	}
 
+	public function listProjectsConfigData()
+	{
+		return [
+			[
+				[
+					"action" => "listProjects",
+					"parameters" => [
+						"google" => [
+							"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+							"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+						],
+					],
+					"authorization" => [
+						"oauth_api" => [
+							"credentials" => [
+								"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+								"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+								"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+							]
+						]
+					]
+				]
+			],
+			[
+				[
+					"action" => "listProjects",
+					"parameters" => [
+						"google" => [
+						],
+					],
+					"authorization" => [
+						"oauth_api" => [
+							"credentials" => [
+								"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+								"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+								"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+							]
+						]
+					]
+				]
+			],
+			[
+				[
+					"action" => "listProjects",
+					"parameters" => [
+					],
+					"authorization" => [
+						"oauth_api" => [
+							"credentials" => [
+								"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+								"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+								"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+							]
+						]
+					]
+				]
+			]
+		];
+	}
+
+	public function listBucketsConfigData()
+	{
+		return [
+			[
+				[
+					"action" => "listBuckets",
+					"parameters" => [
+						"google" => [
+							"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+						],
+					],
+					"authorization" => [
+						"oauth_api" => [
+							"credentials" => [
+								"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+								"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+								"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+							]
+						]
+					]
+				]
+			]
+		];
+	}
+
 	public function configData()
 	{
 		return [
@@ -215,34 +300,19 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		$this->assertTrue($skippedQuery);
 	}
 
-	public function testListProjects()
+	/**
+	 * @dataProvider listProjectsConfigData
+	 */
+	public function testListProjects($params)
 	{
+		// without optional params
 		$logger = new \Monolog\Logger(APP_NAME, array(
 			(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
 			(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
 		));
 
-		$config = [
-			"action" => "listProjects",
-			"parameters" => [
-				"google" => [
-					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
-					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
-				],
-			],
-			"authorization" => [
-				"oauth_api" => [
-					"credentials" => [
-						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
-						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
-						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
-					]
-				]
-			]
-		];
-
 		$extractor = new Extractor(["logger" => $logger]);
-		$result = $extractor->setConfig($config)->run();
+		$result = $extractor->setConfig($params)->run();
 
 		$this->assertArrayHasKey('status', $result);
 		$this->assertArrayHasKey('projects', $result);
@@ -255,6 +325,44 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		}
 
 		$this->assertEquals('success', $result['status']);
+	}
+
+
+	/**
+	 * @dataProvider listBucketsConfigData
+	 */
+	public function testListBuckets($params)
+	{
+		$logger = new \Monolog\Logger(APP_NAME, array(
+			(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
+			(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+		));
+
+		$extractor = new Extractor(["logger" => $logger]);
+		$result = $extractor->setConfig($params)->run();
+
+		$this->assertArrayHasKey('status', $result);
+		$this->assertArrayHasKey('buckets', $result);
+
+		$this->assertTrue(count($result['buckets']) > 0);
+
+		$testBucketFound = false;
+		$testBucketId = BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET;
+		if (strpos($testBucketId, 'gs://') !== false) {
+			$testBucketId = str_replace('gs://', '', $testBucketId);
+		}
+
+		foreach ($result['buckets'] AS $metaData) {
+			$this->assertArrayHasKey('id', $metaData);
+			$this->assertArrayHasKey('name', $metaData);
+
+			if ($metaData['id'] === $testBucketId) {
+				$testBucketFound = true;
+			}
+		}
+
+		$this->assertEquals('success', $result['status']);
+		$this->assertTrue($testBucketFound);
 	}
 
 	public function testInvalidAction()
