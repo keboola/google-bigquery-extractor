@@ -1,6 +1,7 @@
 <?php
 namespace Keboola\Google\BigQuery;
 
+use GuzzleHttp\Exception\RequestException;
 use Keboola\Google\BigQuery\Configuration\AuthorizationDefinition;
 use Keboola\Google\BigQuery\Configuration\ParamsDefinition;
 use Keboola\Google\BigQuery\Exception\UserException;
@@ -116,25 +117,62 @@ class Extractor
 		return $this->$method();
 	}
 
+	/**
+	 *
+	 * @param RequestException $e
+	 */
+	private function processRequestException(RequestException $e)
+	{
+		if ($e->getResponse() && $e->getResponse()->getStatusCode() < 500) {
+			$responseBody = \GuzzleHttp\json_decode($e->getResponse()->getBody(), true);
+
+			if (!empty($responseBody['error']['errors'])) {
+				foreach ($responseBody['error']['errors'] AS $error) {
+					$message = '';
+					if (isset($error['location'])) {
+						$message .= '[' . mb_strtoupper($error['location']) . '] ';
+					}
+					if (isset($error['reason'])) {
+						$message .= '[' . mb_strtoupper($error['reason']) . '] ';
+					}
+					if (isset($error['message'])) {
+						$message .= $error['message'];
+					}
+					throw new UserException("Google API Error: " . $message);
+				}
+			}
+		}
+
+		throw $e;
+	}
+
 	private function processListBucketsAction()
 	{
 		$google = $this->initGoogle();
 		$project = $this->params['parameters']['google'];
 
-		return [
-			'status' => 'success',
-			'buckets' => $google->listBuckets($project),
-		];
+		try {
+			return [
+				'status' => 'success',
+				'buckets' => $google->listBuckets($project),
+			];
+		} catch (RequestException $e) {
+			$this->processRequestException($e);
+		}
 	}
 
 	private function processListProjectsAction()
 	{
 		$google = $this->initGoogle();
 
-		return [
-			'status' => 'success',
-			'projects' => $google->listProjects(),
-		];
+		try {
+			return [
+				'status' => 'success',
+				'projects' => $google->listProjects(),
+			];
+		} catch (RequestException $e) {
+			$this->processRequestException($e);
+		}
 	}
 
 	private function processRunAction()
