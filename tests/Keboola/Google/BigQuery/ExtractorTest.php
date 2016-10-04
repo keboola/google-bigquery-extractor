@@ -183,7 +183,58 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		];
 	}
 
-	public function testUserError()
+	public function testActionsUserError()
+	{
+		// list buckets action
+		$config = [
+			"action" => "listBuckets",
+			"parameters" => [
+				"google" => [
+				],
+			],
+			"authorization" => [
+				"oauth_api" => [
+					"credentials" => [
+						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+					]
+				]
+			]
+		];
+
+		$extractor = new Extractor();
+
+		try {
+			$result = $extractor->setConfig($config)->run();
+			$this->fail("Config without project specification should produce error");
+		} catch (UserException $e) {
+		}
+
+		// list buckets action
+		$config = [
+			"action" => "listProjects",
+			"authorization" => [
+				"oauth_api" => [
+					"credentials" => [
+						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+					]
+				]
+			]
+		];
+
+		$extractor = new Extractor();
+
+		try {
+			$extractor->setConfig($config)->run();
+			$this->fail("Config without params section should produce error");
+		} catch (UserException $e) {
+		}
+	}
+
+	public function testRunUserError()
 	{
 		$query = [
 			"name" => "Big Query Test",
@@ -232,7 +283,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
 		try {
 			$extractor->setConfig($config)->run();
-			$this->fail("Config with non-billable project shloud produce error");
+			$this->fail("Config with non-billable project should produce error");
 		} catch (UserException $e) {
 		}
 	}
