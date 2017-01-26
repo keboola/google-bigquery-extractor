@@ -231,7 +231,7 @@ class Extractor
 					$manifest = [
 						'destination' => IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query),
 						'delimiter' => ',',
-						'enclosure' => '',
+						'enclosure' => '"',
 						'primary_key' => $query['primaryKey'],
 						'incremental' => $query['incremental'],
 
