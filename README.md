@@ -18,6 +18,7 @@ Main functionality
 - The `queries` section defines queries used to fetch data
     - `name` - query name
     - `query` - query in BigQuery Syntax (https://cloud.google.com/bigquery/query-reference)
+    - `useLegacySql` *(optional)* - Use legacy SQL to run query. Set `false` to use standard SQL *(default is true)* (https://cloud.google.com/bigquery/docs/reference/standard-sql/)
     - `flattenResults` - *(optional)* Flattens all nested and repeated fields in the query results. *(default is true)*
     - `outputTable` *(optional)* - destination table ID in Keboola Connection *(if empty, will be generated automatically from query name)*
     - `primaryKey` *(optional)* - primary key in Keboola Connection
