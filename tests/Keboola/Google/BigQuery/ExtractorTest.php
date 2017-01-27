@@ -179,6 +179,21 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 					"enabled" => false,
 					"primaryKey" => ["year", "month", "day"],
 				]
+			],
+			[
+				[
+					"name" => "Big Query Test using standard SQL",
+					"outputTable" => "in.c-tests.tableId",
+					"query" => "
+									SELECT * FROM `publicdata.samples.natality`
+									WHERE year = 1985
+									AND state = 'FL' LIMIT 10
+								",
+					"incremental" => true,
+					"enabled" => true,
+					"useLegacySql" => false,
+					"primaryKey" => ["year", "month", "day"],
+				]
 			]
 		];
 	}

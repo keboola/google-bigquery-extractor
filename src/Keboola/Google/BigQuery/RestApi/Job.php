@@ -234,6 +234,7 @@ class Job
 			"configuration" => array(
 				"query" => array(
 					"flattenResults" => $config['flattenResults'],
+					"useLegacySql" => $config['useLegacySql'],
 					"allowLargeResults" => true,
 					"query" => $config['query'],
 					"destinationTable" => array(
@@ -242,7 +243,7 @@ class Job
 						'tableId' => IdGenerator::generateTableName($account, $config),
 					),
 					"useQueryCache" => true,
-					"writeDisposition" => 'WRITE_TRUNCATE' //@TODO maybe alert
+					"writeDisposition" => 'WRITE_TRUNCATE'
 				)
 			)
 		);
