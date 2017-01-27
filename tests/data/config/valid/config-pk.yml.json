@@ -12,7 +12,8 @@
         "primaryKey": [ "id", "parentId"],
         "incremental": true,
         "flattenResults": true,
-        "enabled": true
+        "enabled": true,
+        "useLegacySql": true
       }
     ]
   },

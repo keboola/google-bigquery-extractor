@@ -11,7 +11,8 @@
         "primaryKey": [],
         "incremental": false,
         "flattenResults": true,
-        "enabled": false
+        "enabled": false,
+        "useLegacySql": true
       }
     ]
   },

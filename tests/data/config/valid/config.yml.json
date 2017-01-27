@@ -12,7 +12,8 @@
         "primaryKey": [],
         "incremental": false,
         "flattenResults": true,
-        "enabled": true
+        "enabled": true,
+        "useLegacySql": false
       }
     ]
   },

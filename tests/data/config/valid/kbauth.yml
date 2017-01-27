@@ -8,6 +8,7 @@ parameters:
       primaryKey: null
       incremental: false
       flattenResults: true
+      useLegacySql: true
 authorization:
   oauth_api:
     id: 'id'
