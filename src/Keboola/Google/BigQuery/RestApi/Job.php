@@ -130,6 +130,37 @@ class Job
 	 * @param Client $client
 	 * @return bool
 	 */
+	private function validateStatus(Response $response, Client $client)
+	{
+		$responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
+
+		if (!empty($responseBody['error']['errors'])) {
+			foreach ($responseBody['error']['errors'] AS $error) {
+				$message = '';
+				if (isset($error['domain'])) {
+					$message .= '[' . mb_strtoupper($error['domain']) . '] ';
+				}
+				if (isset($error['location'])) {
+					$message .= '[' . mb_strtoupper($error['location']) . '] ';
+				}
+				if (isset($error['reason'])) {
+					$message .= '[' . mb_strtoupper($error['reason']) . '] ';
+				}
+				if (isset($error['message'])) {
+					$message .= $error['message'];
+				}
+				throw new UserException("Google API Error: " . $message);
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param Response $response
+	 * @param Client $client
+	 * @return bool
+	 */
 	private function validateJobStatus(Response $response, Client $client)
 	{
 		$responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
@@ -137,6 +168,9 @@ class Job
 		if (!empty($responseBody['status']['errors'])) {
 			foreach ($responseBody['status']['errors'] AS $error) {
 				$message = '';
+				if (isset($error['domain'])) {
+					$message .= '[' . mb_strtoupper($error['domain']) . '] ';
+				}
 				if (isset($error['location'])) {
 					$message .= '[' . mb_strtoupper($error['location']) . '] ';
 				}
@@ -159,9 +193,14 @@ class Job
 
 		$this->logStart();
 
-		$response = $client->request($url, 'POST', ['content-type' => 'application/json'], ["json" => $this->params]);
+		try {
+			$response = $client->request($url, 'POST', ['content-type' => 'application/json'], ["json" => $this->params]);
+		} catch (RequestException $e) {
+			$response = $e->getResponse();
+		}
 
-		$this->validateJobStatus($response, $client);
+		$this->validateStatus($response, $client);
+
 
 		$responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
 
