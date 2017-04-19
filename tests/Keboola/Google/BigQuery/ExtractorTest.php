@@ -275,6 +275,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 			$testHandler,
 		));
 
+		// non billable project
 		$config = [
 			"parameters" => [
 				"google" => [
@@ -299,6 +300,62 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 		try {
 			$extractor->setConfig($config)->run();
 			$this->fail("Config with non-billable project should produce error");
+		} catch (UserException $e) {
+		}
+
+		// non existing cloud storage bucket
+		$config = [
+			"parameters" => [
+				"google" => [
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET . '-' . uniqid(),
+				],
+				"queries" => [$query]
+			],
+			"authorization" => [
+				"oauth_api" => [
+					"credentials" => [
+						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+					]
+				]
+			]
+		];
+
+		$extractor = new Extractor(["logger" => $logger]);
+
+		try {
+			$extractor->setConfig($config)->run();
+			$this->fail("Config with non existing path should produce error");
+		} catch (UserException $e) {
+		}
+
+		// invalid cloud storage bucket path
+		$config = [
+			"parameters" => [
+				"google" => [
+					"projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+					"storage" => str_replace('gs://', '', BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET),
+				],
+				"queries" => [$query]
+			],
+			"authorization" => [
+				"oauth_api" => [
+					"credentials" => [
+						"#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+						"appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+						"#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+					]
+				]
+			]
+		];
+
+		$extractor = new Extractor(["logger" => $logger]);
+
+		try {
+			$extractor->setConfig($config)->run();
+			$this->fail("Config with invalid path should produce error");
 		} catch (UserException $e) {
 		}
 	}
