@@ -1,12 +1,24 @@
-sudo: false
+sudo: required
 
-language: php
-php:
-  - '7.0'
+language: bash
+
+services:
+  - docker
 
 before_install:
-  - composer self-update
+  - docker-compose -v
 
-install: composer install -n
+install:
+  - docker-compose run --rm php composer install -n
+  - docker-compose run --rm php ./vendor/bin/phpcs --standard=psr2 --ignore=vendor -n .
+  - docker-compose build tests
 
-script: php vendor/bin/phpunit
+script:
+  - docker-compose run --rm tests
+
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: ./deploy.sh
+  on:
+    tags: true
