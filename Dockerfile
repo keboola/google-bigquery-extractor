@@ -12,4 +12,4 @@ RUN curl -sS https://getcomposer.org/installer | php \
   && mv /code/composer.phar /usr/local/bin/composer \
   && composer install
 
-CMD php /code/run.php --data=/data
+CMD php /code/src/run.php --data=/data
