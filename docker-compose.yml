@@ -5,7 +5,7 @@ services:
     volumes:
       - .:/code
     working_dir: /code
-    entrypoint: "./phpunit.sh"
+    command: sh -c 'composer install && php vendor/bin/phpcs --standard=psr2 -n --ignore=vendor --extensions=php . && php vendor/bin/phpunit'
     tty: true
     stdin_open: true
     environment:
@@ -18,9 +18,3 @@ services:
       ENV_BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET: $ENV_BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET
       ENV_BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT: $ENV_BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT
       ENV_BIGQUERY_EXTRACTOR_NONBILLABLE_GOOGLE_PROJECT: $ENV_BIGQUERY_EXTRACTOR_NONBILLABLE_GOOGLE_PROJECT
-
-  php:
-    image: keboola/docker-php56-all-db
-    volumes:
-        - .:/code
-    working_dir: /code
