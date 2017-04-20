@@ -1,4 +1,4 @@
-# Google BigQuery Extractor
+# Google BigQuery Extractor [![Build Status](https://travis-ci.org/keboola/google-bigquery-extractor.svg?branch=master)](https://travis-ci.org/keboola/google-bigquery-extractor)
 
 Provide easy solution to load data from Google BigQuery to Keboola Connection.
 
