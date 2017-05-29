@@ -223,10 +223,10 @@ class Extractor
                     $fileName =  explode('/', $fileName);
                     $fileName = $fileName[count($fileName) -1];
 
-                    $response = $google->request($cloudFileInfo['mediaLink']);
-
                     $filePath = $dirPath . '/' . $fileName;
-                    file_put_contents($filePath, $response->getBody());
+                    $resource = fopen($filePath, 'w');
+
+                    $google->request($cloudFileInfo['mediaLink'], 'GET', [], ['sink' => $resource]);
 
                     $manifest = [
                         'destination' => IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query),
