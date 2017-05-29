@@ -2,6 +2,8 @@ FROM php:7.0
 
 RUN apt-get update && apt-get install unzip git libxml2-dev -y
 
+RUN echo "memory_limit = -1" >> /usr/local/etc/php/php.ini
+
 WORKDIR /code
 
 # Initialize
