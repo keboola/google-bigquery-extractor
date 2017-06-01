@@ -182,7 +182,7 @@ class Extractor
 
         $dirPath = getenv('KBC_DATADIR') . '/out/tables';
         if (!file_exists($dirPath) || !is_dir($dirPath)) {
-            mkdir($dirPath, 0755, true);
+            mkdir($dirPath, 0770, true);
         }
 
         foreach ($this->params['parameters']['queries'] as $query) {
@@ -217,30 +217,47 @@ class Extractor
                 $result = $google->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query, $project);
                 $this->logger->info(sprintf('%s: Starting download of %s files', $query["name"], count($result)));
 
+                // create directory for sliced files
+                $outputTable = IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query);
+                $outputDataDir = $dirPath . '/' . $outputTable . ".csv.gz";
+                if (!file_exists($outputDataDir) || !is_dir($outputDataDir)) {
+                    mkdir($outputDataDir, 0770, true);
+                }
 
+                // download files
                 foreach ($result as $cloudFileInfo) {
                     $fileName = $cloudFileInfo['name'];
                     $fileName =  explode('/', $fileName);
                     $fileName = $fileName[count($fileName) -1];
 
-                    $filePath = $dirPath . '/' . $fileName;
+                    $filePath = $outputDataDir . '/' . $fileName;
                     $resource = fopen($filePath, 'w');
 
                     $google->request($cloudFileInfo['mediaLink'], 'GET', [], ['sink' => $resource]);
 
-                    $manifest = [
-                        'destination' => IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query),
-                        'delimiter' => ',',
-                        'enclosure' => '"',
-                        'primary_key' => $query['primaryKey'],
-                        'incremental' => $query['incremental'],
-
-                    ];
-
-                    file_put_contents($filePath . '.manifest', Yaml::dump($manifest));
                     $this->logger->info(sprintf('%s: %s downloaded', $query["name"], $fileName));
                 }
 
+                // create manifest
+                $tableId = IdGenerator::generateTableName(getenv('KBC_CONFIGID'), $query);
+                $manifest = [
+                    'destination' => $outputTable,
+                    'delimiter' => ',',
+                    'enclosure' => '"',
+                    'primary_key' => $query['primaryKey'],
+                    'incremental' => $query['incremental'],
+                    'columns' => array_map(
+                        function($tableColumn) {
+                            return $tableColumn['name'];
+                        },
+                        $google->listTableColumns($project['projectId'], Job::CACHE_DATASET_ID, $tableId)
+                    )
+                ];
+
+                file_put_contents($outputDataDir . '.manifest', Yaml::dump($manifest));
+                $this->logger->info(sprintf('%s: manifest created', $query["name"]));
+
+                // cloud storage cleanup
                 if (!count($result)) {
                     $this->logger->info(sprintf('%s: Any Cloud Storage cleanup needed', $query["name"]));
                     continue;
