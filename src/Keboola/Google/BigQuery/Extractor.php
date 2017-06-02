@@ -255,7 +255,7 @@ class Extractor
                 ];
 
                 file_put_contents($outputDataDir . '.manifest', Yaml::dump($manifest));
-                $this->logger->info(sprintf('%s: manifest created', $query["name"]));
+                $this->logger->info(sprintf('%s: Manifest created', $query["name"]));
 
                 // cloud storage cleanup
                 if (!count($result)) {
