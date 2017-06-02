@@ -247,7 +247,7 @@ class Extractor
                     'primary_key' => $query['primaryKey'],
                     'incremental' => $query['incremental'],
                     'columns' => array_map(
-                        function($tableColumn) {
+                        function ($tableColumn) {
                             return $tableColumn['name'];
                         },
                         $google->listTableColumns($project['projectId'], Job::CACHE_DATASET_ID, $tableId)
