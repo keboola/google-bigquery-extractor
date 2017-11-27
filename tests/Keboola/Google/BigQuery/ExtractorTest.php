@@ -261,9 +261,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
             "primaryKey" => ["year", "month", "day"],
         ];
 
-        $this->cleanupExtraction($query);
-
-        $enabled = true;
+        $this->cleanupExtraction();
 
         $testHandler = new TestHandler(Logger::INFO);
 
@@ -363,7 +361,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
      */
     public function testRun($query)
     {
-        $this->cleanupExtraction($query);
+        $this->cleanupExtraction();
 
         $enabled = (!isset($query['enabled']) || $query['enabled'] === true) ? true : false;
 
@@ -462,6 +460,8 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
         $extractor = new Extractor(["logger" => $logger]);
         $result = $extractor->setConfig($params)->run();
 
+        var_dump($result);
+
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('buckets', $result);
 
@@ -523,33 +523,16 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    private function cleanupExtraction($query)
+    private function cleanupExtraction()
     {
         $dirPath = getenv('KBC_DATADIR') . '/out/tables';
 
-        if (!is_dir($dirPath)) {
-            return;
-        }
 
-        $files = array_map(
-            function ($fileName) use ($dirPath) {
-                return $dirPath . '/' . $fileName;
-            },
-            array_filter(
-                scandir($dirPath),
-                function ($fileName) use ($dirPath, $query) {
-                    $filePath = $dirPath . '/' . $fileName;
-                    if (!is_file($filePath)) {
-                        return false;
-                    }
-
-                    return strpos($fileName, IdGenerator::generateFileName(getenv('KBC_CONFIGID'), $query)) !== false;
-                }
-            )
-        );
-
-        foreach ($files as $file) {
-            unlink($file);
+        $dir = $dirPath;
+        $di = new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS);
+        $ri = new \RecursiveIteratorIterator($di, \RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($ri as $file) {
+            $file->isDir() ? rmdir($file) : unlink($file);
         }
     }
 
