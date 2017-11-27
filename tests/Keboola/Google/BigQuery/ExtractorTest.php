@@ -569,7 +569,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
                         return false;
                     }
 
-                    return strpos($fileName, IdGenerator::generateFileName(getenv('KBC_CONFIGID'), $query)) !== false;
+                    return strpos($fileName, IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query)) !== false;
                 }
             )
         );
