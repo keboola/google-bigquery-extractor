@@ -525,14 +525,13 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
     private function cleanupExtraction()
     {
-        $dirPath = getenv('KBC_DATADIR') . '/out/tables';
-
-
-        $dir = $dirPath;
-        $di = new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS);
-        $ri = new \RecursiveIteratorIterator($di, \RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($ri as $file) {
-            $file->isDir() ? rmdir($file) : unlink($file);
+        $dirPath = new \SplFileInfo(getenv('KBC_DATADIR') . '/out/tables');
+        if ($dirPath->isDir()) {
+            $dirIterator = new \RecursiveDirectoryIterator($dirPath, \FilesystemIterator::SKIP_DOTS);
+            $recursiveIterator = new \RecursiveIteratorIterator($dirIterator, \RecursiveIteratorIterator::CHILD_FIRST);
+            foreach ($recursiveIterator as $file) {
+                $file->isDir() ? rmdir($file) : unlink($file);
+            }
         }
     }
 
