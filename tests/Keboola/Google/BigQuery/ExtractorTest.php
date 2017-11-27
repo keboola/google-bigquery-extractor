@@ -460,8 +460,6 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
         $extractor = new Extractor(["logger" => $logger]);
         $result = $extractor->setConfig($params)->run();
 
-        var_dump($result);
-
         $this->assertArrayHasKey('status', $result);
         $this->assertArrayHasKey('buckets', $result);
 
