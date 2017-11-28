@@ -318,7 +318,7 @@ class Job
                         'datasetId' => self::CACHE_DATASET_ID,
                         'tableId' => IdGenerator::generateTableName($account, $config),
                     ),
-                    "printHeader" => true,
+                    "printHeader" => false,
                     "destinationUris" => array(
                         IdGenerator::generateExportPath($account, $config, $project)
                     )

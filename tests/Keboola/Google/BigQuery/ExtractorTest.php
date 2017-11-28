@@ -261,9 +261,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
             "primaryKey" => ["year", "month", "day"],
         ];
 
-        $this->cleanupExtraction($query);
-
-        $enabled = true;
+        $this->cleanupExtraction();
 
         $testHandler = new TestHandler(Logger::INFO);
 
@@ -363,7 +361,7 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
      */
     public function testRun($query)
     {
-        $this->cleanupExtraction($query);
+        $this->cleanupExtraction();
 
         $enabled = (!isset($query['enabled']) || $query['enabled'] === true) ? true : false;
 
@@ -523,33 +521,15 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    private function cleanupExtraction($query)
+    private function cleanupExtraction()
     {
-        $dirPath = getenv('KBC_DATADIR') . '/out/tables';
-
-        if (!is_dir($dirPath)) {
-            return;
-        }
-
-        $files = array_map(
-            function ($fileName) use ($dirPath) {
-                return $dirPath . '/' . $fileName;
-            },
-            array_filter(
-                scandir($dirPath),
-                function ($fileName) use ($dirPath, $query) {
-                    $filePath = $dirPath . '/' . $fileName;
-                    if (!is_file($filePath)) {
-                        return false;
-                    }
-
-                    return strpos($fileName, IdGenerator::generateFileName(getenv('KBC_CONFIGID'), $query)) !== false;
-                }
-            )
-        );
-
-        foreach ($files as $file) {
-            unlink($file);
+        $dirPath = new \SplFileInfo(getenv('KBC_DATADIR') . '/out/tables');
+        if ($dirPath->isDir()) {
+            $dirIterator = new \RecursiveDirectoryIterator($dirPath, \FilesystemIterator::SKIP_DOTS);
+            $recursiveIterator = new \RecursiveIteratorIterator($dirIterator, \RecursiveIteratorIterator::CHILD_FIRST);
+            foreach ($recursiveIterator as $file) {
+                $file->isDir() ? rmdir($file) : unlink($file);
+            }
         }
     }
 
@@ -565,11 +545,11 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
                 scandir($dirPath),
                 function ($fileName) use ($dirPath, $query) {
                     $filePath = $dirPath . '/' . $fileName;
-                    if (!is_file($filePath)) {
+                    if (!is_file($filePath) && !is_dir($filePath)) {
                         return false;
                     }
 
-                    return strpos($fileName, IdGenerator::generateFileName(getenv('KBC_CONFIGID'), $query)) !== false;
+                    return strpos($fileName, IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query)) !== false;
                 }
             )
         );
@@ -591,9 +571,11 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
                 $this->assertArrayHasKey('destination', $params);
                 $this->assertArrayHasKey('incremental', $params);
                 $this->assertArrayHasKey('primary_key', $params);
+                $this->assertArrayHasKey('columns', $params);
 
                 $this->assertTrue($params['incremental']);
                 $this->assertEquals($query['primaryKey'], $params['primary_key']);
+                $this->assertNotEmpty($params['columns']);
 
                 $this->assertEquals(IdGenerator::generateOutputTableId(getenv('KBC_CONFIGID'), $query), $params['destination']);
 
@@ -604,11 +586,37 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
                 $manifestValidated = true;
             }
 
-            // archive validation
-            if (preg_match('/.csv.gz$/ui', $file)) {
-                exec("gunzip -d " . escapeshellarg($file), $output, $return);
-                $this->assertEquals(0, $return);
+            // archive validation in slice folder
+            if (preg_match('/.csv.gz$/ui', $file) && is_dir($file)) {
+                $csvValidatedCount = 0;
+                $slicesDirPath = $file;
+                $slicedFiles = array_map(
+                    function ($fileName) use ($slicesDirPath) {
+                        return $slicesDirPath . '/' . $fileName;
+                    },
+                    array_filter(
+                        scandir($file),
+                        function ($fileName) use ($slicesDirPath, $query) {
+                            $filePath = $slicesDirPath . '/' . $fileName;
+                            if (!is_file($filePath)) {
+                                return false;
+                            }
 
+                            return true;
+                        }
+                    )
+                );
+
+                foreach ($slicedFiles as $slicedFile) {
+                    exec("gunzip -d " . escapeshellarg($slicedFile), $output, $return);
+                    $this->assertEquals(0, $return);
+
+                    $csvValidatedCount += 1;
+                }
+
+
+                $this->assertGreaterThan(0, count($slicedFiles));
+                $this->assertEquals(count($slicedFiles), $csvValidatedCount);
                 $csvValidated = true;
             }
         }

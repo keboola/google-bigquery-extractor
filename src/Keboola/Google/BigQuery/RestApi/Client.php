@@ -9,6 +9,17 @@ class Client extends RestApi
 {
     const PAGING = 50;
 
+    public function listTableColumns($projectId, $datasetId, $tableId)
+    {
+        $tableUrl = 'https://www.googleapis.com/bigquery/v2/projects/%s/datasets/%s/tables/%s';
+        $tableUrl = sprintf($tableUrl, $projectId, $datasetId, $tableId);
+
+        $response = $this->request($tableUrl);
+        $response = \GuzzleHttp\json_decode($response->getBody(), true);
+
+        return $response['schema']['fields'];
+    }
+
     public function deleteCloudStorageFile(array $fileInfo)
     {
         try {
