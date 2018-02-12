@@ -63,13 +63,20 @@ class Extractor
 
         // oauth validation
         try {
-            $token = json_decode($params['authorization']['oauth_api']['credentials']['#data'], true);
+            $processor = new Processor();
+            $processedParameters = $processor->processConfiguration(
+                new AuthorizationDefinition(),
+                [$params['authorization']]
+            );
+
+            // tokens
+            $token = json_decode($processedParameters['oauth_api']['credentials']['#data'], true);
             if (!isset($token['access_token']) || !isset($token['refresh_token'])) {
                 throw new ConfigException('Missing access or refresh token data');
             }
 
-            $params['authorization']['oauth_api']['credentials']['#data'] = $token;
-            $this->params['authorization'] = $params['authorization'];
+            $processedParameters['oauth_api']['credentials']['#data'] = $token;
+            $this->params['authorization'] = $processedParameters;
         } catch (ConfigException $e) {
             $this->logger->error($e->getMessage(), []);
             throw new UserException(UserException::ERR_OAUTH_CONFIG);
