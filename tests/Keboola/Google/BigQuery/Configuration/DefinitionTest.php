@@ -86,19 +86,13 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
         }
 
         // yaml - oauth validation
-        $processor = new Processor();
-        $processedParameters = $processor->processConfiguration(
-            new AuthorizationDefinition(),
-            [$params['authorization']]
-        );
 
-        // yaml - tokens
-        $token = json_decode($processedParameters['oauth_api']['credentials']['#data'], true);
+        $token = json_decode($params['authorization']['oauth_api']['credentials']['#data'], true);
         if (!isset($token['access_token']) || !isset($token['refresh_token'])) {
             $this->fail('Missing access or refresh token data');
         }
 
-        $parsedParams['authorization'] = $processedParameters;
+        $parsedParams['authorization'] = $params['authorization'];
 
         // params validation
         $processor = new Processor();
@@ -134,37 +128,6 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
                 new ParamsDefinition(!empty($params['action']) ? $params['action'] : 'run'),
                 [$params['parameters']]
             );
-
-            $this->fail("Validation should produce error");
-        } catch (InvalidConfigurationException $e) {
-        }
-    }
-
-    /**
-     * Test invalid authorzization configs
-     *
-     * @dataProvider invalidAuthConfigsData
-     */
-    public function testInvalidAuthConfigs($filePath)
-    {
-        $params = Yaml::parse(file_get_contents($filePath));
-
-        try {
-            if (!isset($params['authorization'])) {
-                throw new InvalidConfigurationException(UserException::ERR_MISSING_OAUTH_CONFIG);
-            }
-
-            $processor = new Processor();
-            $processedParameters = $processor->processConfiguration(
-                new AuthorizationDefinition(),
-                [$params['authorization']]
-            );
-
-            // yaml - tokens
-            $token = json_decode($processedParameters['oauth_api']['credentials']['#data'], true);
-            if (!isset($token['access_token']) || !isset($token['refresh_token'])) {
-                throw new InvalidConfigurationException('Missing access or refresh token data');
-            }
 
             $this->fail("Validation should produce error");
         } catch (InvalidConfigurationException $e) {
