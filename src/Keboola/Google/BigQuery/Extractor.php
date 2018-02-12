@@ -63,8 +63,6 @@ class Extractor
 
         // oauth validation
         try {
-
-            // tokens
             $token = json_decode($params['authorization']['oauth_api']['credentials']['#data'], true);
             if (!isset($token['access_token']) || !isset($token['refresh_token'])) {
                 throw new ConfigException('Missing access or refresh token data');
