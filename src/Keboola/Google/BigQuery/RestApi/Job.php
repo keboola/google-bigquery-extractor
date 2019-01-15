@@ -65,62 +65,29 @@ class Job
 
     /**
      * Check if dataset exist, if not try create it
-     *
-     * @param Client $client
-     * @return bool|null
-     * @throws ExtractorException
      */
     private function initDataset(Client $client)
     {
-        $datasetExists = null;
         try {
-            $url = 'https://www.googleapis.com/bigquery/v2/projects/%s/datasets/%s';
-            $url = sprintf($url, $this->projectId, self::CACHE_DATASET_ID);
+            if (!$client->datasetExists($this->projectId, self::CACHE_DATASET_ID)) {
+                $this->logger->info(sprintf(
+                    '%s: Creating dataset "%s:%s"',
+                    $this->name,
+                    $this->projectId,
+                    self::CACHE_DATASET_ID
+                ));
 
-            $response = $client->request($url, 'GET');
+                $datasetMetadata = $client->createDataset(
+                    $this->projectId,
+                    self::CACHE_DATASET_ID,
+                    self::CACHE_DATASET_DESC
+                );
 
-
-            $responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
-
-            if ($response->getStatusCode() == 200 && !empty($responseBody['selfLink'])) {
-                $datasetExists = true;
+                $this->logger->info(sprintf('%s: Dataset "%s" created', $this->name, $datasetMetadata['id']));
             }
         } catch (RequestException $e) {
-            if ($e->getCode() == 404) {
-                $datasetExists = false;
-            } else {
-                $this->processRequestException($e);
-            }
+            $this->processRequestException($e);
         }
-
-        if (!$datasetExists) {
-            $url = 'https://www.googleapis.com/bigquery/v2/projects/%s/datasets';
-            $url = sprintf($url, $this->projectId);
-
-            $datasetId = sprintf("%s:%s", $this->projectId, self::CACHE_DATASET_ID);
-            $params = array(
-                "id" => $datasetId,
-                "description" => self::CACHE_DATASET_DESC,
-            );
-
-            $this->logger->info(sprintf('%s: Creating dataset "%s"', $this->name, $datasetId));
-
-            try {
-                $response = $client->request($url, 'POST', ['content-type' => 'application/json'], ["json" => $params]);
-
-                $responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
-                if ($response->getStatusCode() != 200 || empty($responseBody['selfLink'])) {
-                    throw new ExtractorException('Could not create query dataset');
-                }
-
-                $datasetExists = true;
-                $this->logger->info(sprintf('%s: Dataset "%s" created', $this->name, $datasetId));
-            } catch (RequestException $e) {
-                $this->processRequestException($e);
-            }
-        }
-
-        return $datasetExists;
     }
 
     /**
