@@ -79,4 +79,70 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($this->client->deleteDataset($projectId, $datasetId));
         $this->assertFalse($this->client->datasetExists($projectId, $datasetId));
     }
+
+    public function testListFiles()
+    {
+        $bucket = BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET;
+        $fileInfos = [];
+        $account = 'test-list';
+
+
+        $queries = [
+            'first query' => 2,
+            'second query' => 1,
+        ];
+
+        // file creation
+        foreach ($queries as $queryName => $fileCount) {
+            $filePath = IdGenerator::generateExportPath(
+                $account,
+                [
+                    'name' => $queryName,
+                    'format' => 'csv',
+                ],
+                [
+                    "projectId" => $this->testProjectId,
+                    "storage" => $bucket,
+                ]
+            );
+
+            $filePath = str_replace($bucket, '', $filePath);
+            $filePath = trim($filePath, '/');
+            $filePath = explode('*', $filePath, 2);
+            $filePath = $filePath[0];
+
+            for ($i = 0; $i < $fileCount; $i++) {
+                $response = $this->client->request(
+                    'https://www.googleapis.com/upload/storage/v1/b/' . str_replace('gs://', '', $bucket) . '/o',
+                    'POST',
+                    [],
+                    [
+                        'query' => [
+                            'uploadType' => 'media',
+                            'name' => $filePath . '-' . $i,
+                        ]
+                    ]
+                );
+
+                $fileInfos[] = \GuzzleHttp\json_decode($response->getBody(), true);
+            }
+        }
+
+        // files count validation
+        foreach ($queries as $queryName => $fileCount) {
+            $files = $this->client->listCloudStorageFiles(
+                $account,
+                [
+                    'name' => $queryName,
+                    'format' => 'csv',
+                ],
+                [
+                    "projectId" => $this->testProjectId,
+                    "storage" => $bucket,
+                ]
+            );
+
+            $this->assertEquals($fileCount, count($files));
+        }
+    }
 }
