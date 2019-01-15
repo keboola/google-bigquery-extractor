@@ -3,7 +3,6 @@ namespace Keboola\Google\BigQuery\RestApi;
 
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Response;
-use Keboola\Google\BigQuery\Exception\ExtractorException;
 use Keboola\Google\BigQuery\Exception\UserException;
 use Psr\Log\LoggerInterface;
 

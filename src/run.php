@@ -72,9 +72,6 @@ try {
     }
 
     exit(1);
-} catch (Exception\ExtractorException $e) {
-    $logger->log('error', $e->getMessage(), []);
-    exit(2);
 } catch (\Exception $e) {
     print $e->getMessage();
     print $e->getTraceAsString();
