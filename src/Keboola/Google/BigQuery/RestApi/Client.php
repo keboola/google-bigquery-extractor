@@ -3,6 +3,7 @@ namespace Keboola\Google\BigQuery\RestApi;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use Keboola\Google\BigQuery\Exception\UserException;
 use Keboola\Google\ClientBundle\Google\RestApi;
 
 class Client extends RestApi
@@ -121,6 +122,86 @@ class Client extends RestApi
         }
 
         return $return;
+    }
+
+    public function datasetExists(string $projectId, string $datasetId): bool
+    {
+        try {
+            $url = sprintf(
+                'https://www.googleapis.com/bigquery/v2/projects/%s/datasets/%s',
+                $projectId,
+                $datasetId
+            );
+
+            $response = $this->request($url, 'GET');
+
+            $responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
+
+            if ($response->getStatusCode() == 200 && !empty($responseBody['selfLink'])) {
+                return true;
+            }
+        } catch (RequestException $e) {
+            if ($e->getCode() == 404) {
+                return false;
+            }
+
+            throw $e;
+        }
+    }
+
+    public function deleteDataset(string $projectId, string $datasetId): bool
+    {
+        try {
+            $url = sprintf(
+                'https://www.googleapis.com/bigquery/v2/projects/%s/datasets/%s',
+                $projectId,
+                $datasetId
+            );
+
+            $response = $this->request($url, 'DELETE');
+            return $response->getStatusCode() === 204;
+        } catch (RequestException $e) {
+            throw $e;
+        }
+    }
+
+    public function createDataset(string $projectId, string $datasetId, string $description = null): array
+    {
+        $url = sprintf(
+            'https://www.googleapis.com/bigquery/v2/projects/%s/datasets',
+            $projectId
+        );
+
+        $params = array(
+            'description' => $description,
+            'id' => $datasetId,
+            'datasetReference' => [
+                'datasetId' => $datasetId,
+            ],
+        );
+
+        try {
+            $response = $this->request(
+                $url,
+                'POST',
+                [
+                    'content-type' => 'application/json',
+                ],
+                [
+                    'json' => $params,
+                ]
+            );
+
+            $responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
+
+            if ($response->getStatusCode() != 200 || empty($responseBody['selfLink'])) {
+                throw new UserException('Could not create query dataset');
+            }
+
+            return $responseBody;
+        } catch (RequestException $e) {
+            throw $e;
+        }
     }
 
     /**
