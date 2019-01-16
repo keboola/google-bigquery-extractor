@@ -10,9 +10,9 @@ services:
     tty: true
     stdin_open: true
     environment:
-      - KBC_CONFIGID="extractor-test"
-      - KBC_DATADIR="/tmp/extractor"
-      - KBC_RUNID="987.654.321"
+      - KBC_CONFIGID=extractor-test
+      - KBC_DATADIR=/tmp/extractor
+      - KBC_RUNID=987.654.321
       - BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON
       - BIGQUERY_EXTRACTOR_APP_KEY
       - BIGQUERY_EXTRACTOR_APP_SECRET
