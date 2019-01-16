@@ -4,6 +4,7 @@ namespace Keboola\Google\BigQuery;
 use Keboola\Google\BigQuery\Exception\UserException;
 use Keboola\Google\BigQuery\RestApi\Client;
 use Keboola\Google\BigQuery\RestApi\IdGenerator;
+use Keboola\Google\BigQuery\RestApi\Job;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\TestHandler;
@@ -12,6 +13,9 @@ use Symfony\Component\Yaml\Yaml;
 
 class ExtractorTest extends \PHPUnit_Framework_TestCase
 {
+    /** @var Client */
+    private $client;
+
     /**
      * Cleanup workspace
      */
@@ -49,6 +53,8 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
                 }
             }
         }
+
+        $this->client = $client;
     }
 
     public function listProjectsConfigData()
@@ -361,7 +367,13 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
      */
     public function testRun($query)
     {
+        $projectId = BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT;
         $this->cleanupExtraction();
+
+        if ($this->client->datasetExists($projectId, Job::CACHE_DATASET_ID)) {
+            $this->cleanupDataset($projectId, Job::CACHE_DATASET_ID);
+            $this->client->deleteDataset($projectId, Job::CACHE_DATASET_ID);
+        }
 
         $enabled = (!isset($query['enabled']) || $query['enabled'] === true) ? true : false;
 
@@ -521,6 +533,26 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
         }
     }
 
+    private function cleanupDataset(string $projectId, string $datasetId)
+    {
+        $google = new \Google_Client([
+            'client_id' => BIGQUERY_EXTRACTOR_APP_KEY,
+            'client_secret' => BIGQUERY_EXTRACTOR_APP_SECRET,
+        ]);
+
+        $google->setAccessToken(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON);
+
+        $tables = (new \Google_Service_Bigquery($google))->tables;
+
+        foreach ($tables->listTables($projectId, $datasetId) as $table) {
+            $tables->delete(
+                $projectId,
+                $datasetId,
+                $table->getTableReference()->getTableId()
+            );
+        }
+    }
+
     private function cleanupExtraction()
     {
         $dirPath = new \SplFileInfo(getenv('KBC_DATADIR') . '/out/tables');
@@ -627,87 +659,8 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
 
     private function validateCleanup($query, $project)
     {
-        // validation of clenaup
-        $client = new Client(BIGQUERY_EXTRACTOR_APP_KEY, BIGQUERY_EXTRACTOR_APP_SECRET);
-
-        $data = json_decode(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON, true);
-        $client->setCredentials($data['access_token'], $data['refresh_token']);
-
-        $files = $client->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query, $project);
+        $files = $this->client->listCloudStorageFiles(getenv('KBC_CONFIGID'), $query, $project);
         $this->assertCount(0, $files);
-        return true;
-    }
-
-    public function testListFiles()
-    {
-        // validation of clenaup
-        $client = new Client(BIGQUERY_EXTRACTOR_APP_KEY, BIGQUERY_EXTRACTOR_APP_SECRET);
-
-        $data = json_decode(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON, true);
-        $client->setCredentials($data['access_token'], $data['refresh_token']);
-
-        $fileInfos = [];
-        $account = 'test-list';
-
-
-        $queries = [
-            'first query' => 2,
-            'second query' => 1,
-        ];
-
-        // file creation
-        foreach ($queries as $queryName => $fileCount) {
-            $filePath = IdGenerator::generateExportPath(
-                $account,
-                [
-                    'name' => $queryName,
-                    'format' => 'csv',
-                ],
-                [
-                    "projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
-                    "storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
-                ]
-            );
-
-            $filePath = str_replace(BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET, '', $filePath);
-            $filePath = trim($filePath, '/');
-            $filePath = explode('*', $filePath, 2);
-            $filePath = $filePath[0];
-
-            for ($i = 0; $i < $fileCount; $i++) {
-                $response = $client->request(
-                    'https://www.googleapis.com/upload/storage/v1/b/' . str_replace('gs://', '', BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET) . '/o',
-                    'POST',
-                    [],
-                    [
-                        'query' => [
-                            'uploadType' => 'media',
-                            'name' => $filePath . '-' . $i,
-                        ]
-                    ]
-                );
-
-                $fileInfos[] = \GuzzleHttp\json_decode($response->getBody(), true);
-            }
-        }
-
-        // files count validation
-        foreach ($queries as $queryName => $fileCount) {
-            $files = $client->listCloudStorageFiles(
-                $account,
-                [
-                    'name' => $queryName,
-                    'format' => 'csv',
-                ],
-                [
-                    "projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
-                    "storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
-                ]
-            );
-
-            $this->assertEquals($fileCount, count($files));
-        }
-
         return true;
     }
 }

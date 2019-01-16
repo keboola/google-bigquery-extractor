@@ -4,13 +4,13 @@ require __DIR__ . '/../vendor/autoload.php';
 
 const APP_NAME = 'ex-google-bigquery';
 
-$appKey = getenv('ENV_BIGQUERY_EXTRACTOR_APP_KEY');
-$appSecret = getenv('ENV_BIGQUERY_EXTRACTOR_APP_SECRET');
-$accessTokenJson = getenv('ENV_BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON');
+$appKey = getenv('BIGQUERY_EXTRACTOR_APP_KEY');
+$appSecret = getenv('BIGQUERY_EXTRACTOR_APP_SECRET');
+$accessTokenJson = getenv('BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON');
 
-$cloudStorageBucket = getenv('ENV_BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET');
-$projectId = getenv('ENV_BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT');
-$badProjectId = getenv('ENV_BIGQUERY_EXTRACTOR_NONBILLABLE_GOOGLE_PROJECT');
+$cloudStorageBucket = getenv('BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET');
+$projectId = getenv('BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT');
+$badProjectId = getenv('BIGQUERY_EXTRACTOR_NONBILLABLE_GOOGLE_PROJECT');
 
 foreach ([$appKey, $appSecret, $accessTokenJson, $cloudStorageBucket, $projectId, $badProjectId] as $var) {
     if ($var === false) {
