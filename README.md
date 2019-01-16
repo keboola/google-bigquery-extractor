@@ -48,3 +48,7 @@ Google is slicing large results to multiple files. Primary key shoudl be defined
   ]
 }
 ```
+
+## Development
+
+Follow step described in [Docker Development](https://github.com/keboola/google-bigquery-extractor/blob/master/DOCKER.md).
