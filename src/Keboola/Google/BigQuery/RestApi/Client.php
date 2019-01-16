@@ -137,9 +137,7 @@ class Client extends RestApi
 
             $responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
 
-            if ($response->getStatusCode() == 200 && !empty($responseBody['selfLink'])) {
-                return true;
-            }
+            return $response->getStatusCode() === 200 && !empty($responseBody['selfLink']);
         } catch (RequestException $e) {
             if ($e->getCode() == 404) {
                 return false;
