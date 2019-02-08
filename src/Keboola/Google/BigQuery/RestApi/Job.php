@@ -122,7 +122,7 @@ class Job
 
     private function getJobUrl(array $responseBody)
     {
-        if (empty($responseBody['jobReference']['projectId'] || $responseBody['jobReference']['jobId'])) {
+        if (empty($responseBody['jobReference']['projectId']) || empty($responseBody['jobReference']['jobId'])) {
             $this->logger->error(sprintf('%s: Google API error - missing job reference', $this->name));
             throw new \Exception('Google API error - missing job reference');
         }
