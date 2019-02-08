@@ -120,6 +120,26 @@ class Job
         return true;
     }
 
+    private function getJobUrl(array $responseBody)
+    {
+        if (empty($responseBody['jobReference']['projectId'] || $responseBody['jobReference']['jobId'])) {
+            $this->logger->error(sprintf('%s: Google API error - missing job reference', $this->name));
+            throw new \Exception('Google API error - missing job reference');
+        }
+
+        $url = sprintf(self::API_ENDPOINT, $responseBody['jobReference']['projectId']);
+        unset($responseBody['jobReference']['projectId']);
+
+        $url .= '/' . $responseBody['jobReference']['jobId'];
+        unset($responseBody['jobReference']['jobId']);
+
+        if (count($responseBody['jobReference'])) {
+            $url .= '?' . http_build_query($responseBody['jobReference']);
+        }
+
+        return $url;
+    }
+
     /**
      * @param Response $response
      * @param Client $client
@@ -167,6 +187,7 @@ class Job
 
 
         $responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
+        $jobUrl = $this->getJobUrl($responseBody);
 
         // polling job
         $retriesCount = 0;
@@ -175,16 +196,17 @@ class Job
             sleep($waitSeconds);
 
             try {
-                $response = $client->request($responseBody['selfLink'], 'GET');
+                $this->logger->info(sprintf('%s: Polling query job', $this->name));
+
+                $response = $client->request($jobUrl, 'GET');
 
                 $this->validateJobStatus($response, $client);
 
                 $responseBody = \GuzzleHttp\json_decode($response->getBody(), true);
+                $jobUrl = $this->getJobUrl($responseBody);
             } catch (RequestException $e) {
                 $this->processRequestException($e);
             }
-
-            $this->logger->debug(sprintf('%s: Polling query job', $this->name));
 
             $retriesCount++;
         } while (in_array($responseBody['status']['state'], array('RUNNING', 'PENDING')));
