@@ -141,6 +141,20 @@ class Extractor
                     throw new UserException("Google API Error: " . $message);
                 }
             }
+
+            if (!empty($responseBody['error']) && is_string($responseBody['error'])) {
+                if (isset($responseBody['error_description'])) {
+                    $message = sprintf('%s (%s)', $responseBody['error_description'], $responseBody['error']);
+                } else {
+                    $message = $responseBody['error'];
+                }
+
+                if (strpos($message, 'invalid_grant') !== false) {
+                    $message .= ' - Try re-authorize your account';
+                }
+
+                throw new UserException("Google API Error: " . $message);
+            }
         }
 
         throw $e;
