@@ -251,6 +251,38 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
             $this->fail("Config without params section should produce error");
         } catch (UserException $e) {
         }
+
+        // invalid access token
+        $data = json_decode(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON, true);
+        $data['access_token'] = uniqid();
+        $data['refresh_token'] = uniqid();
+
+        $config = [
+            "action" => "listProjects",
+            "parameters" => [
+                "google" => [
+                    "projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+                ],
+            ],
+            "authorization" => [
+                "oauth_api" => [
+                    "credentials" => [
+                        "#data" => json_encode($data),
+                        "appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+                        "#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+                    ]
+                ]
+            ]
+        ];
+
+        $extractor = new Extractor();
+
+        try {
+            $extractor->setConfig($config)->run();
+            $this->fail("Config without params section should produce error");
+        } catch (UserException $e) {
+            $this->assertContains('Try re-authorize your account', $e->getMessage());
+        }
     }
 
     public function testRunUserError()
