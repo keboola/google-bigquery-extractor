@@ -15,6 +15,7 @@ Main functionality
 - The `google` section
     - `projectId` - ID of the BigQuery project that will be billed for the job
     - `storage` - URI of existing Google Cloud Storage bucket, where data will be exported
+    - `location` *(optional, default US)* - The geographic location where the job should run and source data exists. 
 - The `queries` section defines queries used to fetch data
     - `name` - query name
     - `query` - query in BigQuery Syntax (https://cloud.google.com/bigquery/query-reference)
@@ -35,6 +36,7 @@ Google is slicing large results to multiple files. Primary key shoudl be defined
     {
       "projectId": "some-project-123",
       "storage": "gs://some-bucket"
+      "location": "EU"
     }
   ],
   "queries": [
