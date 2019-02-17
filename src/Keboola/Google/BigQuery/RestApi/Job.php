@@ -20,7 +20,6 @@ class Job
     private $logger;
 
     const API_ENDPOINT = 'https://www.googleapis.com/bigquery/v2/projects/%s/jobs';
-    const CACHE_DATASET_ID = 'kbc_extractor';
     const CACHE_DATASET_DESC = 'Keboola Google BigQuery Extractor';
 
     public function __construct($name, $account, array $params, $projectId, LoggerInterface $logger)
@@ -65,21 +64,25 @@ class Job
     /**
      * Check if dataset exist, if not try create it
      */
-    private function initDataset(Client $client)
+    private function initDataset(Client $client, $location)
     {
+        $datasetId = IdGenerator::genereateExtractorDataset($location);
+
         try {
-            if (!$client->datasetExists($this->projectId, self::CACHE_DATASET_ID)) {
+            if (!$client->datasetExists($this->projectId, $datasetId)) {
                 $this->logger->info(sprintf(
-                    '%s: Creating dataset "%s:%s"',
+                    '%s: Creating dataset "%s:%s" in %s',
                     $this->name,
                     $this->projectId,
-                    self::CACHE_DATASET_ID
+                    $datasetId,
+                    $location
                 ));
 
                 $datasetMetadata = $client->createDataset(
                     $this->projectId,
-                    self::CACHE_DATASET_ID,
-                    self::CACHE_DATASET_DESC
+                    $datasetId,
+                    self::CACHE_DATASET_DESC,
+                    $location
                 );
 
                 $this->logger->info(sprintf('%s: Dataset "%s" created', $this->name, $datasetMetadata['id']));
@@ -264,7 +267,7 @@ class Job
                     "query" => $config['query'],
                     "destinationTable" => array(
                         'projectId' => $project['projectId'],
-                        'datasetId' => self::CACHE_DATASET_ID,
+                        'datasetId' => IdGenerator::genereateExtractorDataset($project['location']),
                         'tableId' => IdGenerator::generateTableName($account, $config),
                     ),
                     "useQueryCache" => true,
@@ -275,7 +278,7 @@ class Job
 
         $job = new Job($config['name'], $account, $params, $project['projectId'], $logger);
 
-        $job->initDataset($client);
+        $job->initDataset($client, $project['location']);
 
         return $job;
     }
@@ -303,7 +306,7 @@ class Job
                     "destinationFormat" => $format,
                     "sourceTable" => array(
                         'projectId' => $project['projectId'],
-                        'datasetId' => self::CACHE_DATASET_ID,
+                        'datasetId' => IdGenerator::genereateExtractorDataset($project['location']),
                         'tableId' => IdGenerator::generateTableName($account, $config),
                     ),
                     "printHeader" => false,

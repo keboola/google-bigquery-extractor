@@ -102,4 +102,9 @@ class IdGenerator
 
         return $fileName;
     }
+
+    public static function genereateExtractorDataset($location): string
+    {
+        return sprintf('kbc_extractor_%s', mb_strtolower(str_replace('-', '_', $location)));
+    }
 }
