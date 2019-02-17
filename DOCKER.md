@@ -57,12 +57,16 @@ Project must have enabled:
  - Billing in  **`Navigation menu > Billing`** 
  - BigQuery and Cloud Storage API  in  **`Navigation menu > API & Services > Library`**
 
-In **`Navigation menu`** select **`Storage > Browser`** and create a new bucket.
+In **`Navigation menu`** select **`Storage > Browser`** and create 2 new buckets.
 
-Save your project ID and bucket into `.env` file. Bucket must be specified as  _Google Cloud Storage uri_ in following format: `gs://{bucket-name}`.
+- The first must be located in USA
+- The second must be located in European Union
+
+Save your project ID and buckets into `.env` file. Bucket must be specified as  _Google Cloud Storage uri_ in following format: `gs://{bucket-name}`.
 
 ```
 BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET=
+BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET_EU=
 BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT=
 ```
 
