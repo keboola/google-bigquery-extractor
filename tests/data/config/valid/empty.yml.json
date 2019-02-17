@@ -2,7 +2,8 @@
   "parameters": {
     "google": {
       "projectId": "some-project-123",
-      "storage": "gs://some-bucket"
+      "storage": "gs://some-bucket",
+      "location": "US"
     },
     "queries": []
   },

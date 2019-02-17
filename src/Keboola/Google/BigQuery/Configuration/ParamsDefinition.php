@@ -42,7 +42,11 @@ class ParamsDefinition implements ConfigurationInterface
         }
 
         // location
-        $google->children()->scalarNode('location')->defaultValue('US');
+        $param = $google->children()->scalarNode('location');
+
+        if ($this->action !== 'listBuckets' && $this->action !== 'listProjects') {
+            $param->defaultValue('US');
+        }
 
         // queries
         $rootNode
