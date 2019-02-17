@@ -402,9 +402,11 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
         $projectId = BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT;
         $this->cleanupExtraction();
 
-        if ($this->client->datasetExists($projectId, Job::CACHE_DATASET_ID)) {
-            $this->cleanupDataset($projectId, Job::CACHE_DATASET_ID);
-            $this->client->deleteDataset($projectId, Job::CACHE_DATASET_ID);
+        $datasetId = IdGenerator::genereateExtractorDataset('US');
+
+        if ($this->client->datasetExists($projectId, $datasetId)) {
+            $this->cleanupDataset($projectId, $datasetId);
+            $this->client->deleteDataset($projectId, $datasetId);
         }
 
         $enabled = (!isset($query['enabled']) || $query['enabled'] === true) ? true : false;
