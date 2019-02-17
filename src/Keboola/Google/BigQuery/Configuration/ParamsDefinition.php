@@ -41,6 +41,9 @@ class ParamsDefinition implements ConfigurationInterface
             $param->isRequired()->cannotBeEmpty();
         }
 
+        // location
+        $google->children()->scalarNode('location')->defaultValue('US');
+
         // queries
         $rootNode
             ->children()
