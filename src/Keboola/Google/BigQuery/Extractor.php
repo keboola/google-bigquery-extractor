@@ -264,7 +264,7 @@ class Extractor
                         function ($tableColumn) {
                             return $tableColumn['name'];
                         },
-                        $google->listTableColumns($project['projectId'], Job::CACHE_DATASET_ID, $tableId)
+                        $google->listTableColumns($project['projectId'], IdGenerator::genereateExtractorDataset($project['location']), $tableId)
                     )
                 ];
 

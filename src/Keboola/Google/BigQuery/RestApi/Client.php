@@ -163,7 +163,7 @@ class Client extends RestApi
         }
     }
 
-    public function createDataset(string $projectId, string $datasetId, string $description = null): array
+    public function createDataset(string $projectId, string $datasetId, string $description = null, $location = 'US'): array
     {
         $url = sprintf(
             'https://www.googleapis.com/bigquery/v2/projects/%s/datasets',
@@ -173,6 +173,7 @@ class Client extends RestApi
         $params = array(
             'description' => $description,
             'id' => $datasetId,
+            'location' => $location,
             'datasetReference' => [
                 'datasetId' => $datasetId,
             ],

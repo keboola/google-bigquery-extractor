@@ -41,6 +41,13 @@ class ParamsDefinition implements ConfigurationInterface
             $param->isRequired()->cannotBeEmpty();
         }
 
+        // location
+        $param = $google->children()->scalarNode('location');
+
+        if ($this->action !== 'listBuckets' && $this->action !== 'listProjects') {
+            $param->defaultValue('US');
+        }
+
         // queries
         $rootNode
             ->children()

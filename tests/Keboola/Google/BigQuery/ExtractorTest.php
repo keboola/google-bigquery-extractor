@@ -4,7 +4,6 @@ namespace Keboola\Google\BigQuery;
 use Keboola\Google\BigQuery\Exception\UserException;
 use Keboola\Google\BigQuery\RestApi\Client;
 use Keboola\Google\BigQuery\RestApi\IdGenerator;
-use Keboola\Google\BigQuery\RestApi\Job;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\TestHandler;
@@ -197,6 +196,26 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
                     "enabled" => true,
                     "useLegacySql" => false,
                     "primaryKey" => ["year", "month", "day"],
+                ]
+            ]
+        ];
+    }
+
+    public function configDataEu()
+    {
+        return [
+            [
+                [
+                    "name" => "Big Query Test using dataset from EU",
+                    "outputTable" => "in.c-tests.tableId",
+                    "query" => "
+                                      SELECT * FROM `bigquery-public-data.utility_eu.country_code_iso`
+                                      LIMIT 10
+                                ",
+                    "incremental" => true,
+                    "enabled" => true,
+                    "useLegacySql" => false,
+                    "primaryKey" => ["fips_code"],
                 ]
             ]
         ];
@@ -402,9 +421,11 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
         $projectId = BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT;
         $this->cleanupExtraction();
 
-        if ($this->client->datasetExists($projectId, Job::CACHE_DATASET_ID)) {
-            $this->cleanupDataset($projectId, Job::CACHE_DATASET_ID);
-            $this->client->deleteDataset($projectId, Job::CACHE_DATASET_ID);
+        $datasetId = IdGenerator::genereateExtractorDataset('US');
+
+        if ($this->client->datasetExists($projectId, $datasetId)) {
+            $this->cleanupDataset($projectId, $datasetId);
+            $this->client->deleteDataset($projectId, $datasetId);
         }
 
         $enabled = (!isset($query['enabled']) || $query['enabled'] === true) ? true : false;
@@ -422,6 +443,62 @@ class ExtractorTest extends \PHPUnit_Framework_TestCase
                 "google" => [
                     "projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
                     "storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET,
+                ],
+                "queries" => [$query]
+            ],
+            "authorization" => [
+                "oauth_api" => [
+                    "credentials" => [
+                        "#data" => BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON,
+                        "appKey" => BIGQUERY_EXTRACTOR_APP_KEY,
+                        "#appSecret" => BIGQUERY_EXTRACTOR_APP_SECRET,
+                    ]
+                ]
+            ]
+        ];
+
+        $extractor = new Extractor(["logger" => $logger]);
+        $extractor->setConfig($config)->run();
+
+        $this->validateCleanup($query, $config['parameters']['google']);
+        $this->validateExtraction($query, $config['parameters']['google'], $enabled ? 2 : 0);
+
+        if (!$enabled) {
+            $this->validateSkipped($query, $testHandler);
+        }
+    }
+
+    /**
+     * @dataProvider configDataEu
+     */
+    public function testRunEuRegion($query)
+    {
+        $projectId = BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT;
+        $this->cleanupExtraction();
+
+        $datasetId = IdGenerator::genereateExtractorDataset('EU');
+
+        if ($this->client->datasetExists($projectId, $datasetId)) {
+            $this->cleanupDataset($projectId, $datasetId);
+            $this->client->deleteDataset($projectId, $datasetId);
+        }
+
+        $enabled = (!isset($query['enabled']) || $query['enabled'] === true) ? true : false;
+
+        $testHandler = new TestHandler(Logger::INFO);
+
+        $logger = new \Monolog\Logger(APP_NAME, array(
+            (new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
+            (new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+            $testHandler,
+        ));
+
+        $config = [
+            "parameters" => [
+                "google" => [
+                    "projectId" => BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT,
+                    "storage" => BIGQUERY_EXTRACTOR_CLOUD_STORAGE_BUCKET_EU,
+                    "location" => 'EU',
                 ],
                 "queries" => [$query]
             ],
