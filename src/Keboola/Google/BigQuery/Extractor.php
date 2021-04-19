@@ -114,7 +114,11 @@ class Extractor
             throw new UserException(sprintf("Action '%s' does not exist.", $this->action));
         }
 
-        return $this->$method();
+        try {
+            return $this->$method();
+        } catch (RequestException $e) {
+            $this->processRequestException($e);
+        }
     }
 
     /**
@@ -165,28 +169,20 @@ class Extractor
         $google = $this->initGoogle();
         $project = $this->params['parameters']['google'];
 
-        try {
-            return [
-                'status' => 'success',
-                'buckets' => $google->listBuckets($project),
-            ];
-        } catch (RequestException $e) {
-            $this->processRequestException($e);
-        }
+        return [
+            'status' => 'success',
+            'buckets' => $google->listBuckets($project),
+        ];
     }
 
     private function processListProjectsAction()
     {
         $google = $this->initGoogle();
 
-        try {
-            return [
-                'status' => 'success',
-                'projects' => $google->listProjects(),
-            ];
-        } catch (RequestException $e) {
-            $this->processRequestException($e);
-        }
+        return [
+            'status' => 'success',
+            'projects' => $google->listProjects(),
+        ];
     }
 
     private function processRunAction()
