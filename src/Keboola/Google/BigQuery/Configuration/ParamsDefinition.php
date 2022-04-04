@@ -88,6 +88,13 @@ class ParamsDefinition implements ConfigurationInterface
             ->end()
         ;
 
+        $rootNode->children()
+            ->integerNode('retriesCount')
+                ->min(0)
+                ->defaultValue(5)
+            ->end()
+        ;
+
         return $treeBuilder;
     }
 }
