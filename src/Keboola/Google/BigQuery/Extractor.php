@@ -311,6 +311,13 @@ class Extractor
             $this->params['authorization']['oauth_api']['credentials']['#data']['refresh_token']
         );
 
+        $restApi->setBackoffsCount($this->params['parameters']['retriesCount']);
+
+        // don't retry on 403 error
+        $restApi->setBackoffCallback403(function () {
+            return false;
+        });
+
         return $restApi;
     }
 }

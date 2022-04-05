@@ -107,6 +107,11 @@ class DefinitionTest extends \PHPUnit_Framework_TestCase
             [$params['parameters']]
         );
 
+        //set default value if not set explicitly
+        if (!array_key_exists('retriesCount', $jsonParams['parameters'])) {
+            $jsonParams['parameters']['retriesCount'] = 5;
+        }
+
         // expected output
         foreach ($jsonParams as $key => $value) {
             $this->assertArrayHasKey($key, $parsedParams);

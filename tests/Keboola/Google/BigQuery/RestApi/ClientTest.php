@@ -1,10 +1,17 @@
 <?php
 namespace Keboola\Google\BigQuery\RestApi;
 
+use GuzzleHttp\Exception\ClientException;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
+
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
     /** @var Client */
     private $client;
+
+    /** @var \Monolog\Handler\TestHandler */
+    private $testHandler;
 
     const TEST_DATASET_ID = 'ClientTest';
 
@@ -14,12 +21,19 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         parent::setUp();
 
-        $client = new Client(BIGQUERY_EXTRACTOR_APP_KEY, BIGQUERY_EXTRACTOR_APP_SECRET);
+        $this->testHandler = new TestHandler();
+        $logger = new Logger('Google BigQuery API tests');
+        $logger->pushHandler($this->testHandler);
 
         $data = json_decode(BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON, true);
-        $client->setCredentials($data['access_token'], $data['refresh_token']);
+        $this->client = new Client(
+            BIGQUERY_EXTRACTOR_APP_KEY,
+            BIGQUERY_EXTRACTOR_APP_SECRET,
+            $data['access_token'],
+            $data['refresh_token'],
+            $logger
+        );
 
-        $this->client = $client;
         $this->testProjectId = BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT;
 
         if ($this->client->datasetExists($this->testProjectId, self::TEST_DATASET_ID)) {
@@ -143,6 +157,23 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             );
 
             $this->assertEquals($fileCount, count($files));
+        }
+    }
+
+    public function testRetries(): void
+    {
+        $retriesCount = 5;
+        $this->client->setBackoffsCount($retriesCount);
+        try {
+            $this->client->deleteDataset('1111', '1111');
+        } catch (ClientException $e) {
+        }
+
+        $this->assertCount($retriesCount, $this->testHandler->getRecords());
+
+        foreach ($this->testHandler->getRecords() as $key => $value) {
+            $this->assertEquals(Logger::INFO, $value['level']);
+            $this->assertEquals(sprintf('Retrying request (%dx)', $key), $value['message']);
         }
     }
 }

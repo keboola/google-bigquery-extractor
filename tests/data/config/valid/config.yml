@@ -11,6 +11,7 @@ parameters:
       flattenResults: true
       enabled: true
       useLegacySql: false
+  retriesCount: 3
 authorization:
   oauth_api:
     credentials:

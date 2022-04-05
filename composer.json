@@ -11,11 +11,11 @@
         }
     ],
     "require": {
-        "php": ">=7.0",
+        "php": ">=7.2",
         "google/apiclient": "^2.0",
         "symfony/yaml": "^3.1",
-        "monolog/monolog": "^1.21",
-        "keboola/google-client-bundle": "^4.0",
+        "monolog/monolog": "^2.4",
+        "keboola/google-client-bundle": "^5.1",
         "symfony/config": "^3.1",
         "squizlabs/php_codesniffer": "2.8.1"
     },
