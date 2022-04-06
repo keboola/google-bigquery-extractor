@@ -164,16 +164,15 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $retriesCount = 5;
         $this->client->setBackoffsCount($retriesCount);
+        
         try {
             $this->client->deleteDataset('1111', '1111');
+            $this->fail('Delete non-existing dataset in non-existing project should produce error');
         } catch (ClientException $e) {
         }
 
-        $this->assertCount($retriesCount, $this->testHandler->getRecords());
-
-        foreach ($this->testHandler->getRecords() as $key => $value) {
-            $this->assertEquals(Logger::INFO, $value['level']);
-            $this->assertEquals(sprintf('Retrying request (%dx)', $key), $value['message']);
+        for ($i = 1; $i <= $retriesCount; $i++) {
+            $this->assertTrue($this->testHandler->hasInfoThatContains(sprintf('Retrying request (%dx)', $i)));
         }
     }
 }
