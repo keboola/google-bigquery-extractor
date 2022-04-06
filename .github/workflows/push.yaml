@@ -14,6 +14,10 @@ env:
   BIGQUERY_EXTRACTOR_BILLABLE_GOOGLE_PROJECT: syrup-components
   BIGQUERY_EXTRACTOR_NONBILLABLE_GOOGLE_PROJECT: nonbilling-project-346320
 
+  KBC_CONFIGID: extractor-test
+  KBC_DATADIR: /tmp/extractor
+  KBC_RUNID: 987.654.321
+
   # Developer portal login
   KBC_DEVELOPERPORTAL_VENDOR: "keboola"
   KBC_DEVELOPERPORTAL_APP: "keboola.ex-google-bigquery"
@@ -87,6 +91,9 @@ jobs:
         name: Run tests
         run: |
           docker run \
+          -e KBC_CONFIGID \
+          -e KBC_DATADIR \
+          -e KBC_RUNID \
           -e BIGQUERY_EXTRACTOR_ACCESS_TOKEN_JSON \
           -e BIGQUERY_EXTRACTOR_APP_KEY \
           -e BIGQUERY_EXTRACTOR_APP_SECRET \
