@@ -1,4 +1,4 @@
-# Google BigQuery Extractor
+# Google BigQuery Extractor - DEPRECATED
 
 Provide easy solution to load data from Google BigQuery to Keboola Connection.
 
